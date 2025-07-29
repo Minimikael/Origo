@@ -35,9 +35,30 @@ const Dashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(null);
 
+  // Get user's display name
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name;
+    }
+    if (user?.displayName) {
+      return user.displayName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
   const handleCreateDocument = async () => {
-    const newDoc = await createDocument();
-    navigate(`/editor/${newDoc.id}`);
+    try {
+      const newDoc = await createDocument('Untitled Document', '');
+      navigate(`/editor/${newDoc.id}`);
+    } catch (error) {
+      console.error('Error creating document:', error);
+    }
   };
 
   const handleEditDocument = (doc) => {
@@ -55,9 +76,12 @@ const Dashboard = () => {
   };
 
   const handleDeleteDocument = async (docId) => {
-    // In a real app, you'd delete from the backend
-    console.log('Deleting document:', docId);
-    setShowDeleteConfirm(null);
+    try {
+      await deleteDocument(docId);
+      setShowDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting document:', error);
+    }
   };
 
   const filteredDocuments = documents.filter(doc => {
@@ -108,13 +132,14 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-gray-100">
-              Welcome to Origo, {user?.displayName || user?.email?.split('@')[0]}! 👋
+              Welcome to Origo, {getUserDisplayName()}! 👋
             </h1>
           </div>
           <div className="flex items-center space-x-3">
             <button 
               onClick={handleCreateDocument}
               className="btn-primary flex items-center space-x-2"
+              disabled={loading}
             >
               <Add size={16} />
               <span>Document</span>
@@ -201,6 +226,7 @@ const Dashboard = () => {
               <button 
                 onClick={handleCreateDocument}
                 className="btn-primary flex items-center space-x-2 mx-auto"
+                disabled={loading}
               >
                 <Add size={16} />
                 <span>Create Document</span>
@@ -329,14 +355,14 @@ const Dashboard = () => {
                   </div>
                   
                   <p className="text-sm text-gray-400 mb-3">
-                    Updated {formatDate(doc.updatedAt)}
+                    Updated {formatDate(doc.updated_at || doc.updatedAt)}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-1 text-xs text-gray-500">
                         <Time size={12} />
-                        <span>{doc.content.split(' ').length} words</span>
+                        <span>{doc.content ? doc.content.split(' ').length : 0} words</span>
                       </div>
                       {doc.aiAnalysis && (
                         <div className="flex items-center space-x-1 text-xs text-gray-500">

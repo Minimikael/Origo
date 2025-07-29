@@ -19,6 +19,23 @@ const Header = ({ onMenuClick }) => {
     setProfileDropdownOpen(!profileDropdownOpen);
   };
 
+  // Get user's display name from Google auth or email
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name;
+    }
+    if (user?.displayName) {
+      return user.displayName;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
   return (
     <header className="bg-gray-800 border-b border-gray-700 px-4 py-3">
       <div className="flex items-center justify-between">
@@ -32,9 +49,9 @@ const Header = ({ onMenuClick }) => {
           
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">O</span>
+              <User className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-xl font-semibold text-gray-100">Origo</h1>
+            <h1 className="text-xl font-semibold text-gray-100">{getUserDisplayName()}</h1>
           </div>
         </div>
 
@@ -50,7 +67,7 @@ const Header = ({ onMenuClick }) => {
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <span className="text-sm text-gray-300 hidden md:block">
-                    {user.displayName || user.email}
+                    {getUserDisplayName()}
                   </span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
@@ -61,7 +78,7 @@ const Header = ({ onMenuClick }) => {
                       {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-700">
                         <div className="text-sm font-medium text-gray-200">
-                          {user.displayName || 'User'}
+                          Welcome to Origo, {getUserDisplayName()}!
                         </div>
                         <div className="text-xs text-gray-400">
                           {user.email}
