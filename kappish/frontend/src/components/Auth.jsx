@@ -8,7 +8,6 @@ const Auth = () => {
   const [error, setError] = useState('')
   const [showPasskeyStep, setShowPasskeyStep] = useState(false)
   const [passkey, setPasskey] = useState('')
-  const [userData, setUserData] = useState(null)
   
   const { verifyPasskey, user, passkeyVerified } = useAuth()
 
@@ -34,8 +33,7 @@ const Auth = () => {
       if (error) {
         setError(error.message)
       } else {
-        // Store user data for passkey step
-        setUserData(data)
+        // Show passkey step after successful Google auth
         setShowPasskeyStep(true)
       }
     } catch (error) {
