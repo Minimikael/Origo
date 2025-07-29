@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { 
   Plus, 
   MoreHorizontal, 
-  Time, 
+  Clock, 
   Trash2, 
   Edit,
   CheckCircle,
@@ -138,7 +138,7 @@ const Dashboard = () => {
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-600 rounded-lg">
-                <Time className="w-6 h-6 text-white" />
+                <Clock className="w-6 h-6 text-white" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-400">Last Updated</p>
@@ -230,7 +230,7 @@ const Dashboard = () => {
                       
                       <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1 text-xs text-gray-500">
-                          <Time size={12} />
+                          <Clock size={12} />
                           <span>{doc.content ? doc.content.split(' ').length : 0} words</span>
                         </div>
                         {doc.aiAnalysis && (
