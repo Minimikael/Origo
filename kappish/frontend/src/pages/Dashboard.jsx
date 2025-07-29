@@ -46,10 +46,7 @@ const Dashboard = () => {
     }
   }
 
-  const handleEditDocument = (doc) => {
-    setEditingDoc(doc)
-    setShowActionMenu(null)
-  }
+  // TODO: Implement document editing functionality
 
   const handleDeleteDocument = async (docId) => {
     try {
@@ -260,13 +257,6 @@ const Dashboard = () => {
                         {showActionMenu === doc.id && (
                           <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-10">
                             <div className="py-1">
-                              <button
-                                onClick={() => handleEditDocument(doc)}
-                                className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                              >
-                                <Edit size={14} />
-                                <span>Rename</span>
-                              </button>
                               <button
                                 onClick={() => setShowDeleteConfirm(doc.id)}
                                 className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
