@@ -14,6 +14,7 @@ const Auth = () => {
   const [showNameStep, setShowNameStep] = useState(false)
   const [userName, setUserName] = useState('')
   const [passkeyVerified, setPasskeyVerified] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   
   const { user } = useAuth()
 
@@ -25,6 +26,7 @@ const Auth = () => {
     } else {
       setShowPasskeyStep(true)
     }
+    setIsInitialized(true)
   }, [])
 
   // If user is authenticated and passkey is verified, redirect to dashboard
@@ -136,6 +138,15 @@ const Auth = () => {
     }
   }
 
+  // Show loading while initializing
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-white">Loading...</div>
+      </div>
+    )
+  }
+
   // Show passkey verification first - this is a complete gate
   if (showPasskeyStep) {
     return (
@@ -226,11 +237,6 @@ const Auth = () => {
         </div>
       </div>
     )
-  }
-
-  // Only show sign-up/sign-in options after passkey verification
-  if (!passkeyVerified) {
-    return null // Don't show anything if passkey isn't verified
   }
 
   // Show sign-up/sign-in options after passkey verification
