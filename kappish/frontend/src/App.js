@@ -11,7 +11,7 @@ import Auth from './components/Auth';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { user, loading, passkeyVerified } = useAuth();
+  const { user, loading } = useAuth();
   
   if (loading) {
     return (
@@ -22,11 +22,6 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // If user is authenticated but passkey is not verified, show passkey step
-  if (!passkeyVerified) {
     return <Navigate to="/auth" replace />;
   }
   

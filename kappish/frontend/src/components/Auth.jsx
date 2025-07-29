@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Button from './ui/Button'
 import { supabase } from '../services/supabase'
 
 const Auth = () => {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [passkey, setPasskey] = useState('')
@@ -11,6 +13,7 @@ const Auth = () => {
   const [password, setPassword] = useState('')
   const [userName, setUserName] = useState('')
   const [currentStep, setCurrentStep] = useState('loading') // 'loading', 'passkey', 'signup', 'username'
+  const [progress, setProgress] = useState(0)
   
   const { user } = useAuth()
 
@@ -28,9 +31,9 @@ const Auth = () => {
   // If user is authenticated and has username, redirect to dashboard
   useEffect(() => {
     if (user && user.user_metadata?.display_name) {
-      window.location.href = '/'
+      navigate('/')
     }
-  }, [user])
+  }, [user, navigate])
 
   const handlePasskeySubmit = (e) => {
     e.preventDefault()
@@ -81,6 +84,18 @@ const Auth = () => {
 
     setLoading(true)
     setError('')
+    setProgress(0)
+
+    // Start progress animation
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return 90
+        }
+        return prev + 10
+      })
+    }, 100)
 
     try {
       const { error } = await supabase.auth.updateUser({
@@ -92,14 +107,24 @@ const Auth = () => {
 
       if (error) {
         setError(error.message)
+        clearInterval(progressInterval)
+        setProgress(0)
       } else {
-        setUserName('')
-        setError('')
-        // Redirect to dashboard
-        window.location.href = '/'
+        // Complete the progress animation
+        setProgress(100)
+        
+        // Wait a moment for the animation to complete
+        setTimeout(() => {
+          setUserName('')
+          setError('')
+          // Use React Router navigation instead of window.location
+          navigate('/')
+        }, 500)
       }
     } catch (error) {
       setError(error.message)
+      clearInterval(progressInterval)
+      setProgress(0)
     } finally {
       setLoading(false)
     }
@@ -220,7 +245,7 @@ const Auth = () => {
     )
   }
 
-  // Step 3: Username input
+  // Step 3: Username input with loading animation
   if (currentStep === 'username') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -233,34 +258,51 @@ const Auth = () => {
               Please tell us your name to personalize your experience
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleUsernameSubmit}>
-            {error && (
-              <div className="text-red-400 text-sm text-center">
-                {error}
+          
+          {loading && progress > 0 ? (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="text-white text-lg mb-4">Setting up your account...</div>
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <div className="text-gray-400 text-sm">{progress}% complete</div>
               </div>
-            )}
-            <div>
-              <input
-                type="text"
-                required
-                className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your name"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                autoFocus
-              />
             </div>
-            <div>
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                disabled={loading}
-              >
-                Complete Setup
-              </Button>
-            </div>
-          </form>
+          ) : (
+            <form className="mt-8 space-y-6" onSubmit={handleUsernameSubmit}>
+              {error && (
+                <div className="text-red-400 text-sm text-center">
+                  {error}
+                </div>
+              )}
+              <div>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your name"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  autoFocus
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Button
+                  type="submit"
+                  fullWidth
+                  loading={loading}
+                  disabled={loading}
+                >
+                  Complete Setup
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     )
