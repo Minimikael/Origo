@@ -17,7 +17,6 @@ import { useDocuments } from '../context/DocumentContext'
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const { documents, createDocument, deleteDocument, loading } = useDocuments()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
