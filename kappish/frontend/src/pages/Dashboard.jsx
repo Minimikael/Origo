@@ -24,23 +24,6 @@ const Dashboard = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showActionMenu, setShowActionMenu] = useState(null)
 
-  // Get user's display name
-  const getUserDisplayName = () => {
-    if (user?.user_metadata?.full_name) {
-      return user.user_metadata.full_name
-    }
-    if (user?.user_metadata?.name) {
-      return user.user_metadata.name
-    }
-    if (user?.displayName) {
-      return user.displayName
-    }
-    if (user?.email) {
-      return user.email.split('@')[0]
-    }
-    return 'User'
-  }
-
   const handleCreateDocument = async () => {
     try {
       const newDoc = await createDocument('Untitled Document', '')
