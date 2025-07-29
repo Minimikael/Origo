@@ -26,17 +26,11 @@ const Sidebar = ({ isOpen, onToggle }) => {
 
   const workspaceSections = [
     {
-      id: 'home',
-      label: 'Current Home',
-      icon: <Home className="w-5 h-5" />,
-      action: () => navigate('/'),
-      active: true
-    },
-    {
       id: 'projects',
       label: 'Projects',
       icon: <Folder className="w-5 h-5" />,
-      action: () => navigate('/projects'),
+      action: () => navigate('/'),
+      active: true,
       count: documents?.length || 0
     }
   ];
@@ -62,7 +56,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
       isOpen ? 'w-64' : 'w-16'
     }`}>
       {/* Header with toggle button */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+      <div className="flex items-center justify-between p-4">
         {isOpen && (
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -77,16 +71,17 @@ const Sidebar = ({ isOpen, onToggle }) => {
       </div>
 
       {/* Create New Project Button */}
-      <div className="p-4 border-b border-gray-700">
+      <div className="p-4">
         <Button
           onClick={handleCreateDocument}
           variant="primary"
-          size="sm"
+          size="md"
           icon={<Plus className="w-4 h-4" />}
           iconPosition="left"
           fullWidth
+          className="text-sm font-medium"
         >
-          {isOpen && "Create New Project"}
+          {isOpen && "New Project"}
         </Button>
       </div>
 
@@ -107,7 +102,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
               <button
                 key={item.id}
                 onClick={item.action}
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left ${
+                className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors text-left ${
                   item.active 
                     ? 'bg-blue-600 text-white' 
                     : 'text-gray-300 hover:text-gray-200 hover:bg-gray-700'
@@ -138,13 +133,13 @@ const Sidebar = ({ isOpen, onToggle }) => {
         </div>
 
         {/* Workspace Items */}
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4">
           <div className="space-y-1">
             {workspaceItems.map((item) => (
               <button
                 key={item.id}
                 onClick={item.action}
-                className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
+                className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
               >
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0 text-gray-400">
@@ -164,10 +159,10 @@ const Sidebar = ({ isOpen, onToggle }) => {
       </div>
 
       {/* Support Link (bottom) */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4">
         <button
           onClick={() => navigate('/support')}
-          className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
+          className={`w-full flex items-center space-x-3 p-2 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
         >
           <HelpCircle className="w-5 h-5 text-gray-400" />
           {isOpen && <span className="text-sm font-medium">Support</span>}

@@ -38,16 +38,15 @@ import {
   Search as SearchIcon,
   Shield,
   Copy,
-  CheckSquare,
   ChevronDown as ChevronDownIcon,
   RefreshCw,
   Bookmark
 } from 'lucide-react';
 
-const Editor = ({ showNavbar, setShowNavbar }) => {
+const Editor = () => {
   const { documentId } = useParams();
   const navigate = useNavigate();
-  const { documents, loadDocument, updateDocument } = useDocument();
+  const { documents, updateDocument } = useDocument();
   const { 
     argumentStrength, 
     suggestions = [], 
@@ -81,7 +80,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
   
   // Source management state
   const [sources, setSources] = useState([]);
-  const [newSource, setNewSource] = useState({ title: '', url: '', author: '', year: '' });
+  const [newSource, setNewSource] = useState({ title: '', url: '' });
   const [showAddSource, setShowAddSource] = useState(false);
   
   // Research state
@@ -92,6 +91,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
   // Agent dropdown state
   const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [selectedCitationStyle, setSelectedCitationStyle] = useState('APA');
+  const [showSharePopup, setShowSharePopup] = useState(false);
   
   const textareaRef = useRef(null);
 
@@ -125,6 +125,21 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
             e.preventDefault();
             applyFormatting('underline');
             break;
+          case 'z':
+            e.preventDefault();
+            // Undo functionality
+            document.execCommand('undo');
+            break;
+          case 'y':
+            e.preventDefault();
+            // Redo functionality
+            document.execCommand('redo');
+            break;
+          case 'a':
+            e.preventDefault();
+            // Select all
+            document.execCommand('selectAll');
+            break;
         }
       }
     };
@@ -133,8 +148,30 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [content]);
 
+  // Set initial content when component mounts or content changes externally
+  useEffect(() => {
+    if (textareaRef.current && content && textareaRef.current.innerHTML !== content) {
+      const selection = window.getSelection();
+      const range = selection.getRangeAt(0);
+      const start = range.startOffset;
+      const end = range.endOffset;
+      
+      textareaRef.current.innerHTML = content;
+      
+      // Restore cursor position
+      if (selection.rangeCount > 0) {
+        const newRange = document.createRange();
+        newRange.setStart(textareaRef.current.firstChild || textareaRef.current, start);
+        newRange.setEnd(textareaRef.current.firstChild || textareaRef.current, end);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      }
+    }
+  }, [content]);
+
   const handleContentChange = (e) => {
-    setContent(e.target.value);
+    const newContent = e.target.innerHTML;
+    setContent(newContent);
   };
 
   const handleTitleChange = (e) => {
@@ -158,43 +195,101 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
   };
 
   const applyFormatting = (format) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+    const editor = textareaRef.current;
+    if (!editor) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    if (!selectedText) {
+      // If no text is selected, apply formatting to the current position
+      const text = prompt(`Enter text for ${format}:`);
+      if (!text) return;
+      
+      let formattedText = '';
+      switch (format) {
+        case 'bold':
+          formattedText = `<strong>${text}</strong>`;
+          break;
+        case 'italic':
+          formattedText = `<em>${text}</em>`;
+          break;
+        case 'underline':
+          formattedText = `<u>${text}</u>`;
+          break;
+        case 'heading1':
+          formattedText = `<h1>${text}</h1>`;
+          break;
+        case 'heading2':
+          formattedText = `<h2>${text}</h2>`;
+          break;
+        case 'bullet':
+          formattedText = `<li>${text}</li>`;
+          break;
+        case 'numbered':
+          formattedText = `<li>${text}</li>`;
+          break;
+        case 'quote':
+          formattedText = `<blockquote>${text}</blockquote>`;
+          break;
+        case 'link':
+          const url = prompt('Enter URL:');
+          if (url) {
+            formattedText = `<a href="${url}" target="_blank">${text}</a>`;
+          } else {
+            return;
+          }
+          break;
+        case 'image':
+          const imageUrl = prompt('Enter image URL:');
+          if (imageUrl) {
+            formattedText = `<img src="${imageUrl}" alt="${text}" style="max-width: 100%; height: auto;" />`;
+          } else {
+            return;
+          }
+          break;
+      }
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = formattedText;
+      range.insertNode(tempDiv.firstChild);
+      setContent(editor.innerHTML);
+      return;
+    }
+
     let formattedText = '';
-
     switch (format) {
       case 'bold':
-        formattedText = `**${selectedText}**`;
+        formattedText = `<strong>${selectedText}</strong>`;
         break;
       case 'italic':
-        formattedText = `*${selectedText}*`;
+        formattedText = `<em>${selectedText}</em>`;
         break;
       case 'underline':
-        formattedText = `__${selectedText}__`;
+        formattedText = `<u>${selectedText}</u>`;
         break;
       case 'heading1':
-        formattedText = `# ${selectedText}`;
+        formattedText = `<h1>${selectedText}</h1>`;
         break;
       case 'heading2':
-        formattedText = `## ${selectedText}`;
+        formattedText = `<h2>${selectedText}</h2>`;
         break;
       case 'bullet':
-        formattedText = `• ${selectedText}`;
+        formattedText = `<li>${selectedText}</li>`;
         break;
       case 'numbered':
-        formattedText = `1. ${selectedText}`;
+        formattedText = `<li>${selectedText}</li>`;
         break;
       case 'quote':
-        formattedText = `> ${selectedText}`;
+        formattedText = `<blockquote>${selectedText}</blockquote>`;
         break;
       case 'link':
         const url = prompt('Enter URL:');
         if (url) {
-          formattedText = `[${selectedText}](${url})`;
+          formattedText = `<a href="${url}" target="_blank">${selectedText}</a>`;
         } else {
           return;
         }
@@ -202,21 +297,18 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
       case 'image':
         const imageUrl = prompt('Enter image URL:');
         if (imageUrl) {
-          formattedText = `![${selectedText}](${imageUrl})`;
+          formattedText = `<img src="${imageUrl}" alt="${selectedText}" style="max-width: 100%; height: auto;" />`;
         } else {
           return;
         }
         break;
     }
 
-    const newContent = content.substring(0, start) + formattedText + content.substring(end);
-    setContent(newContent);
-    
-    // Restore focus and selection
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start, start + formattedText.length);
-    }, 0);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = formattedText;
+    range.deleteContents();
+    range.insertNode(tempDiv.firstChild);
+    setContent(editor.innerHTML);
   };
 
   const handleChatSubmit = (e) => {
@@ -320,7 +412,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
       addedAt: new Date()
     };
     setSources(prev => [...prev, source]);
-    setNewSource({ title: '', url: '', author: '', year: '' });
+    setNewSource({ title: '', url: '' });
     setShowAddSource(false);
   };
 
@@ -499,7 +591,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
   const currentModel = getModelInfo(selectedModel);
 
   return (
-    <div className="h-full w-full flex flex-col bg-gray-900 overflow-hidden">
+    <div className="h-screen w-full flex flex-col bg-gray-900 overflow-hidden">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-700 bg-gray-800">
         <div className="flex items-center space-x-4">
@@ -531,232 +623,133 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
             <Save className="w-4 h-4" />
             <span>{isSaving ? 'Saving...' : 'Save'}</span>
           </button>
-          <button className="btn-primary flex items-center space-x-2">
+          <button 
+            onClick={() => setShowSharePopup(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
             <Share2 className="w-4 h-4" />
             <span>Share</span>
           </button>
         </div>
       </div>
 
-      {/* Rich Text Toolbar */}
-      <div className="bg-gray-800 border-b border-gray-700 px-6 py-2">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => applyFormatting('bold')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Bold (Ctrl+B)"
-          >
-            <Bold className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('italic')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Italic (Ctrl+I)"
-          >
-            <Italic className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('underline')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Underline (Ctrl+U)"
-          >
-            <Underline className="w-4 h-4" />
-          </button>
-          
-          <div className="w-px h-6 bg-gray-600 mx-2"></div>
-          
-          <button
-            onClick={() => applyFormatting('heading1')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Heading 1"
-          >
-            <Heading1 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('heading2')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Heading 2"
-          >
-            <Heading2 className="w-4 h-4" />
-          </button>
-          
-          <div className="w-px h-6 bg-gray-600 mx-2"></div>
-          
-          <button
-            onClick={() => applyFormatting('bullet')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Bullet List"
-          >
-            <List className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('numbered')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Numbered List"
-          >
-            <ListOrdered className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('quote')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Quote"
-          >
-            <Quote className="w-4 h-4" />
-          </button>
-          
-          <div className="w-px h-6 bg-gray-600 mx-2"></div>
-          
-          <button
-            onClick={() => applyFormatting('link')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Insert Link"
-          >
-            <Link className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('image')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Insert Image"
-          >
-            <Image className="w-4 h-4" />
-          </button>
-          
-          <div className="w-px h-6 bg-gray-600 mx-2"></div>
-          
-          <button
-            onClick={() => applyFormatting('alignLeft')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Align Left"
-          >
-            <AlignLeft className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('alignCenter')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Align Center"
-          >
-            <AlignCenter className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => applyFormatting('alignRight')}
-            className="p-2 rounded hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
-            title="Align Right"
-          >
-            <AlignRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Panel (AI Assistant / Notes) */}
-        <div className={`collapsible-panel ${leftPanelCollapsed ? 'collapsed' : 'expanded'} flex flex-col`}>
+        <div className={`flex flex-col border-r border-gray-700 transition-all duration-300 ease-in-out ${
+          leftPanelCollapsed ? 'w-16' : 'w-80'
+        }`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <button
-                  onClick={() => setShowAgentDropdown(!showAgentDropdown)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-gray-200"
-                >
-                  <div className="w-4 h-4">
-                    {currentModel.icon}
-                  </div>
-                  <span className="text-sm font-medium">{currentModel.title}</span>
-                  <ChevronDownIcon className="w-4 h-4" />
-                </button>
-                
-                {showAgentDropdown && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
-                    <div className="p-2">
-                      <button
-                        onClick={() => {
-                          setSelectedModel('source');
-                          setShowAgentDropdown(false);
-                        }}
-                        className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                          selectedModel === 'source' 
-                            ? 'bg-blue-600 text-white' 
-                            : 'text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        <BookOpen className="w-4 h-4" />
-                        <span className="text-sm">Source</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedModel('research');
-                          setShowAgentDropdown(false);
-                        }}
-                        className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                          selectedModel === 'research' 
-                            ? 'bg-purple-600 text-white' 
-                            : 'text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        <Search className="w-4 h-4" />
-                        <span className="text-sm">Research</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedModel('document');
-                          setShowAgentDropdown(false);
-                        }}
-                        className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
-                          selectedModel === 'document' 
-                            ? 'bg-green-600 text-white' 
-                            : 'text-gray-300 hover:bg-gray-700'
-                        }`}
-                      >
-                        <FileText className="w-4 h-4" />
-                        <span className="text-sm">Document/Notes</span>
-                      </button>
+            {!leftPanelCollapsed ? (
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAgentDropdown(!showAgentDropdown)}
+                    className="flex items-center space-x-2 px-3 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors text-gray-200"
+                  >
+                    <div className="w-4 h-4">
+                      {currentModel.icon}
                     </div>
-                  </div>
-                )}
+                    <span className="text-sm font-medium">{currentModel.title}</span>
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </button>
+                  
+                  {showAgentDropdown && (
+                    <div className="absolute top-full left-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
+                      <div className="p-2">
+                        <button
+                          onClick={() => {
+                            setSelectedModel('source');
+                            setShowAgentDropdown(false);
+                          }}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                            selectedModel === 'source' 
+                              ? 'bg-gray-700 text-white border border-gray-600' 
+                              : 'text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span className="text-sm">Source</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedModel('research');
+                            setShowAgentDropdown(false);
+                          }}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                            selectedModel === 'research' 
+                              ? 'bg-gray-700 text-white border border-gray-600' 
+                              : 'text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          <Search className="w-4 h-4" />
+                          <span className="text-sm">Research</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedModel('document');
+                            setShowAgentDropdown(false);
+                          }}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-left transition-colors ${
+                            selectedModel === 'document' 
+                              ? 'bg-gray-700 text-white border border-gray-600' 
+                              : 'text-gray-300 hover:bg-gray-700'
+                          }`}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span className="text-sm">Document/Notes</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <button
-              onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              {leftPanelCollapsed ? <ChevronRight className="w-4 h-4 text-gray-300" /> : <ChevronLeft className="w-4 h-4 text-gray-300" />}
-            </button>
+            ) : (
+              <div className="flex items-center justify-center">
+                <button
+                  onClick={() => setSelectedModel('source')}
+                  className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
+                  title="Source Assistant"
+                >
+                  <BookOpen className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            )}
+            {leftPanelCollapsed && (
+              <button
+                onClick={() => setLeftPanelCollapsed(false)}
+                className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-gray-300" />
+              </button>
+            )}
           </div>
 
           {!leftPanelCollapsed && (
-            <div className="flex-1 flex flex-col p-4">
-              {/* AI Model Info */}
-              <div className="mb-4 p-3 bg-gray-700 rounded-lg">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className={currentModel.color}>
-                    {currentModel.icon}
-                  </div>
-                  <h4 className="font-semibold text-gray-200">{currentModel.title}</h4>
-                </div>
-                <p className="text-sm text-gray-400">{currentModel.description}</p>
-              </div>
-
+            <div className="flex-1 flex flex-col bg-gray-800">
               {selectedModel === 'source' && (
                 // Source Management View
-                <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-gray-200">Source Management</h4>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => setShowAddSource(!showAddSource)}
-                        className="btn-secondary text-xs px-2 py-1"
-                      >
-                        <PlusCircle className="w-3 h-3 mr-1" />
-                        Add Source
-                      </button>
-                      <button 
-                        onClick={findSourcesTogether}
-                        className="btn-primary text-xs px-2 py-1"
-                      >
-                        <SearchIcon className="w-3 h-3 mr-1" />
-                        Find Together
-                      </button>
+                <div className="flex-1 flex flex-col p-4">
+                  {/* AI Model Info */}
+                  <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className={currentModel.color}>
+                        {currentModel.icon}
+                      </div>
+                      <h4 className="font-semibold text-gray-200">{currentModel.title}</h4>
                     </div>
+                    <p className="text-sm text-gray-400">{currentModel.description}</p>
+                  </div>
+                  <div className="mb-4">
+                    <button 
+                      onClick={() => setShowAddSource(!showAddSource)}
+                      className="w-full btn-secondary px-3 py-2 flex items-center justify-center space-x-2"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Add Source</span>
+                    </button>
                   </div>
 
                   {showAddSource && (
@@ -768,38 +761,34 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                           placeholder="Source title"
                           value={newSource.title}
                           onChange={(e) => setNewSource(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full input text-xs"
+                          className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                         />
                         <input
                           type="text"
                           placeholder="URL"
                           value={newSource.url}
                           onChange={(e) => setNewSource(prev => ({ ...prev, url: e.target.value }))}
-                          className="w-full input text-xs"
+                          className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                         />
-                        <div className="flex space-x-2">
-                          <input
-                            type="text"
-                            placeholder="Author"
-                            value={newSource.author}
-                            onChange={(e) => setNewSource(prev => ({ ...prev, author: e.target.value }))}
-                            className="flex-1 input text-xs"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Year"
-                            value={newSource.year}
-                            onChange={(e) => setNewSource(prev => ({ ...prev, year: e.target.value }))}
-                            className="w-20 input text-xs"
-                          />
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={selectedCitationStyle}
+                            onChange={(e) => setSelectedCitationStyle(e.target.value)}
+                            className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200"
+                          >
+                            <option value="APA">APA</option>
+                            <option value="MLA">MLA</option>
+                            <option value="Harvard">Harvard</option>
+                          </select>
+                          <span className="text-xs text-gray-400">Citation Style</span>
                         </div>
                         <div className="flex space-x-2">
-                          <button onClick={addSource} className="btn-primary text-xs px-3 py-1">
+                          <button onClick={addSource} className="btn-primary px-3 py-2">
                             Add Source
                           </button>
                           <button 
                             onClick={() => setShowAddSource(false)}
-                            className="btn-secondary text-xs px-3 py-1"
+                            className="btn-secondary px-3 py-2"
                           >
                             Cancel
                           </button>
@@ -814,7 +803,6 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h5 className="text-sm font-medium text-gray-200">{source.title}</h5>
-                            <p className="text-xs text-gray-400">{source.author} ({source.year})</p>
                             <div className="flex items-center space-x-2 mt-1">
                               <a 
                                 href={source.url} 
@@ -854,7 +842,17 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
               )}
 
               {selectedModel === 'research' && (
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto space-y-4 p-4">
+                  {/* AI Model Info */}
+                  <div className="p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className={currentModel.color}>
+                        {currentModel.icon}
+                      </div>
+                      <h4 className="font-semibold text-gray-200">{currentModel.title}</h4>
+                    </div>
+                    <p className="text-sm text-gray-400">{currentModel.description}</p>
+                  </div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <input
@@ -867,23 +865,11 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                       <button
                         onClick={startResearch}
                         disabled={!researchTopic.trim() || isResearching}
-                        className="btn-primary px-4 py-2 disabled:opacity-50"
+                        className="btn-primary px-3 py-2 disabled:opacity-50"
                       >
-                        <SearchIcon className="w-4 h-4 mr-2" />
-                        Research
+                        <SearchIcon className="w-4 h-4" />
                       </button>
-                      {researchResults.length > 0 && (
-                        <button
-                          onClick={loadMoreSources}
-                          disabled={isResearching}
-                          className="btn-secondary px-3 py-2 disabled:opacity-50"
-                          title="Load more sources"
-                        >
-                          <RefreshCw className={`w-4 h-4 ${isResearching ? 'animate-spin' : ''}`} />
-                        </button>
-                      )}
                     </div>
-                    
                     {isResearching && (
                       <div className="text-center py-4">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
@@ -892,8 +878,18 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                     )}
                     
                     {researchResults.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-200">Research Results</h4>
+                      <div className="space-y-3 flex-1 overflow-y-auto">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold text-gray-200">Research Results</h4>
+                          <button
+                            onClick={loadMoreSources}
+                            disabled={isResearching}
+                            className="btn-secondary px-3 py-2 disabled:opacity-50"
+                            title="Load more sources"
+                          >
+                            <RefreshCw className={`w-4 h-4 ${isResearching ? 'animate-spin' : ''}`} />
+                          </button>
+                        </div>
                         {researchResults.map(source => (
                           <div key={source.id} className="bg-gray-700 rounded-lg p-3">
                             <div className="flex items-start justify-between">
@@ -935,10 +931,11 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => saveResearchToNotes(source)}
-                                  className="text-green-400 hover:text-green-300 text-xs"
+                                  className="text-green-400 hover:text-green-300 text-sm px-2 py-1 rounded bg-green-400 bg-opacity-10 hover:bg-opacity-20 transition-colors"
                                   title="Save to Notes"
                                 >
-                                  <Bookmark className="w-3 h-3" />
+                                  <Bookmark className="w-4 h-4 mr-1" />
+                                  Save
                                 </button>
                               </div>
                             </div>
@@ -952,14 +949,25 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
 
               {selectedModel === 'document' ? (
                 // Notes View
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col p-4">
+                  {/* AI Model Info */}
+                  <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className={currentModel.color}>
+                        {currentModel.icon}
+                      </div>
+                      <h4 className="font-semibold text-gray-200">{currentModel.title}</h4>
+                    </div>
+                    <p className="text-sm text-gray-400">{currentModel.description}</p>
+                  </div>
+                  
                   <div className="flex items-center space-x-2 mb-4">
                     <input
                       type="text"
                       value={newNote}
                       onChange={(e) => setNewNote(e.target.value)}
                       placeholder="Add a note..."
-                      className="flex-1 input"
+                      className="flex-1 bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                     />
                     <button onClick={addNote} className="btn-primary">
                       <Plus className="w-4 h-4" />
@@ -992,7 +1000,17 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 </div>
               ) : selectedModel !== 'source' && selectedModel !== 'research' && (
                 // Default Chat View
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col p-4">
+                  {/* AI Model Info */}
+                  <div className="mb-4 p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className={currentModel.color}>
+                        {currentModel.icon}
+                      </div>
+                      <h4 className="font-semibold text-gray-200">{currentModel.title}</h4>
+                    </div>
+                    <p className="text-sm text-gray-400">{currentModel.description}</p>
+                  </div>
                   <div className="flex-1 overflow-y-auto space-y-3 mb-4">
                     {chatMessages.map(message => (
                       <div key={message.id} className={`chat-message ${message.sender === 'user' ? 'user' : 'ai'}`}>
@@ -1019,7 +1037,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={`Ask ${currentModel.title}...`}
-                      className="flex-1 input"
+                      className="flex-1 bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                     />
                     <button type="submit" className="btn-primary">
                       <Send className="w-4 h-4" />
@@ -1032,9 +1050,9 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
         </div>
 
         {/* Center Document Editor */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col bg-gray-800">
           <div className="flex-1 p-8">
-            <div className="max-w-4xl mx-auto relative">
+            <div className="max-w-4xl mx-auto relative h-full flex flex-col">
               {highlightedText && (
                 <div className="absolute top-0 right-0 z-10">
                   <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg max-w-sm">
@@ -1058,32 +1076,157 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 </div>
               )}
               
-              <textarea
+              {/* Rich Text Toolbar */}
+              <div className="bg-gray-700 border border-gray-600 rounded-t-lg px-4 py-2 mb-0">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => applyFormatting('bold')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Bold (Ctrl+B)"
+                  >
+                    <Bold className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('italic')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Italic (Ctrl+I)"
+                  >
+                    <Italic className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('underline')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Underline (Ctrl+U)"
+                  >
+                    <Underline className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="w-px h-6 bg-gray-500 mx-2"></div>
+                  
+                  <button
+                    onClick={() => applyFormatting('heading1')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Heading 1"
+                  >
+                    <Heading1 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('heading2')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Heading 2"
+                  >
+                    <Heading2 className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="w-px h-6 bg-gray-500 mx-2"></div>
+                  
+                  <button
+                    onClick={() => applyFormatting('bullet')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Bullet List"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('numbered')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Numbered List"
+                  >
+                    <ListOrdered className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('quote')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Quote"
+                  >
+                    <Quote className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="w-px h-6 bg-gray-500 mx-2"></div>
+                  
+                  <button
+                    onClick={() => applyFormatting('link')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Insert Link"
+                  >
+                    <Link className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('image')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Insert Image"
+                  >
+                    <Image className="w-4 h-4" />
+                  </button>
+                  
+                  <div className="w-px h-6 bg-gray-500 mx-2"></div>
+                  
+                  <button
+                    onClick={() => applyFormatting('alignLeft')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Align Left"
+                  >
+                    <AlignLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('alignCenter')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Align Center"
+                  >
+                    <AlignCenter className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => applyFormatting('alignRight')}
+                    className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors"
+                    title="Align Right"
+                  >
+                    <AlignRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div
                 ref={textareaRef}
-                value={content}
-                onChange={handleContentChange}
+                contentEditable={true}
+                onInput={handleContentChange}
+                onBlur={(e) => setContent(e.target.innerHTML)}
                 placeholder="Start writing your document..."
-                className="w-full h-full bg-gray-800 border border-gray-700 rounded-lg p-6 text-gray-200 placeholder-gray-500 resize-none outline-none focus:ring-2 focus:ring-blue-500"
-                style={{ minHeight: '500px' }}
+                className="w-full flex-1 bg-gray-900 border border-gray-700 rounded-b-lg p-6 text-gray-200 placeholder-gray-500 resize-none outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
+                style={{ minHeight: '0' }}
               />
             </div>
           </div>
         </div>
 
         {/* Right Panel (AI Analysis) */}
-        <div className={`collapsible-panel ${rightPanelCollapsed ? 'collapsed' : 'expanded'} flex flex-col`}>
+        <div className={`flex flex-col border-l border-gray-700 transition-all duration-300 ease-in-out ${
+          rightPanelCollapsed ? 'w-16' : 'w-80'
+        }`}>
           <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
-            <h3 className="text-lg font-semibold text-gray-100">Origo Analysis</h3>
-            <button
-              onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              {rightPanelCollapsed ? <ChevronLeft className="w-4 h-4 text-gray-300" /> : <ChevronRight className="w-4 h-4 text-gray-300" />}
-            </button>
+            {!rightPanelCollapsed ? (
+              <h3 className="text-lg font-semibold text-gray-100">Origo Analysis</h3>
+            ) : (
+              <div className="flex items-center justify-center w-full">
+                <button
+                  className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
+                  title="Origo Analysis"
+                >
+                  <Target className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            )}
+            {rightPanelCollapsed && (
+              <button
+                onClick={() => setRightPanelCollapsed(false)}
+                className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-gray-300" />
+              </button>
+            )}
           </div>
 
           {!rightPanelCollapsed && (
-            <div className="flex-1 p-4 overflow-y-auto">
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-800">
               {/* Argument Strength */}
               <div className="mb-4">
                 <button
@@ -1091,7 +1234,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <Target className="w-4 h-4 text-blue-400" />
+                    <Target className="w-4 h-4 text-white" />
                     <span className="text-sm font-semibold text-gray-200">Argument Strength</span>
                   </div>
                   {collapsedSections.argumentStrength ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
@@ -1099,21 +1242,31 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 
                 {!collapsedSections.argumentStrength && (
                   <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-300">Overall Score</span>
-                      <span className="text-lg font-bold text-blue-400">{argumentStrength || 0}%</span>
-                    </div>
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${argumentStrength || 0}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {(argumentStrength || 0) > 70 ? 'Excellent! Your argument is well-supported with strong evidence.' :
-                       (argumentStrength || 0) > 40 ? 'Good start, but consider adding more supporting evidence to strengthen your position.' :
-                       'Your argument needs more research and evidence to be convincing.'}
-                    </p>
+                    {argumentStrength !== null && argumentStrength !== undefined ? (
+                      <>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-300">Overall Score</span>
+                          <span className="text-lg font-bold text-blue-400">{argumentStrength}%</span>
+                        </div>
+                        <div className="progress-bar">
+                          <div 
+                            className="progress-fill" 
+                            style={{ width: `${argumentStrength}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {argumentStrength > 70 ? 'Excellent! Your argument is well-supported with strong evidence.' :
+                           argumentStrength > 40 ? 'Good start, but consider adding more supporting evidence to strengthen your position.' :
+                           'Your argument needs more research and evidence to be convincing.'}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="text-center">
+                        <Target className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">No argument analysis yet</p>
+                        <p className="text-xs text-gray-500">Write more content to analyze your argument strength</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1125,7 +1278,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <CheckCircle className="w-4 h-4 text-white" />
                     <span className="text-sm font-semibold text-gray-200">Writing Analysis</span>
                   </div>
                   {collapsedSections.writingAnalysis ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
@@ -1133,38 +1286,46 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 
                 {!collapsedSections.writingAnalysis && (
                   <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                    <div className="space-y-3">
-                      <div className="analysis-indicator">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">Thesis Statement</span>
-                          <span className="text-xs text-green-400">✓ Strong</span>
+                    {content && content.length > 50 ? (
+                      <div className="space-y-3">
+                        <div className="analysis-indicator">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-300">Thesis Statement</span>
+                            <span className="text-xs text-green-400">✓ Strong</span>
+                          </div>
+                        </div>
+                        <div className="analysis-indicator">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-300">Evidence & Citations</span>
+                            <span className="text-xs text-yellow-400">⚠ Needs more</span>
+                          </div>
+                        </div>
+                        <div className="analysis-indicator">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-300">Critical Analysis</span>
+                            <span className="text-xs text-green-400">✓ Good</span>
+                          </div>
+                        </div>
+                        <div className="analysis-indicator">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-300">Research Quality</span>
+                            <span className="text-xs text-blue-400">✓ Comprehensive</span>
+                          </div>
+                        </div>
+                        <div className="analysis-indicator">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-300">Writing Structure</span>
+                            <span className="text-xs text-green-400">✓ Well-organized</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="analysis-indicator">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">Evidence & Citations</span>
-                          <span className="text-xs text-yellow-400">⚠ Needs more</span>
-                        </div>
+                    ) : (
+                      <div className="text-center">
+                        <CheckCircle className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">No writing analysis yet</p>
+                        <p className="text-xs text-gray-500">Write more content to analyze your writing quality</p>
                       </div>
-                      <div className="analysis-indicator">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">Critical Analysis</span>
-                          <span className="text-xs text-green-400">✓ Good</span>
-                        </div>
-                      </div>
-                      <div className="analysis-indicator">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">Research Quality</span>
-                          <span className="text-xs text-blue-400">✓ Comprehensive</span>
-                        </div>
-                      </div>
-                      <div className="analysis-indicator">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-300">Writing Structure</span>
-                          <span className="text-xs text-green-400">✓ Well-organized</span>
-                        </div>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1176,7 +1337,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                    <AlertTriangle className="w-4 h-4 text-white" />
                     <span className="text-sm font-semibold text-gray-200">Origo Audit</span>
                   </div>
                   {collapsedSections.origoAudit ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
@@ -1184,23 +1345,31 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 
                 {!collapsedSections.origoAudit && (
                   <div className="mt-2 space-y-2">
-                    {(auditSuggestions || []).map(suggestion => (
-                      <button
-                        key={suggestion.id}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="w-full text-left p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                      >
-                        <div className="flex items-start space-x-2">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${
-                            suggestion.type === 'critical' ? 'bg-red-400' : 'bg-yellow-400'
-                          }`}></div>
-                          <div className="flex-1">
-                            <h5 className="text-sm font-medium text-gray-200">{suggestion.title}</h5>
-                            <p className="text-xs text-gray-400 mt-1">{suggestion.message}</p>
+                    {(auditSuggestions || []).length > 0 ? (
+                      (auditSuggestions || []).map(suggestion => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion)}
+                          className="w-full text-left p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                        >
+                          <div className="flex items-start space-x-2">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${
+                              suggestion.type === 'critical' ? 'bg-red-400' : 'bg-yellow-400'
+                            }`}></div>
+                            <div className="flex-1">
+                              <h5 className="text-sm font-medium text-gray-200">{suggestion.title}</h5>
+                              <p className="text-xs text-gray-400 mt-1">{suggestion.message}</p>
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 bg-gray-700 rounded-lg text-center">
+                        <AlertTriangle className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">No audit issues found</p>
+                        <p className="text-xs text-gray-500">Your document appears to be in good shape!</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1212,7 +1381,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <Lightbulb className="w-4 h-4 text-purple-400" />
+                    <Lightbulb className="w-4 h-4 text-white" />
                     <span className="text-sm font-semibold text-gray-200">Writing Suggestions</span>
                   </div>
                   {collapsedSections.suggestions ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
@@ -1220,73 +1389,24 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                 
                 {!collapsedSections.suggestions && (
                   <div className="mt-2 space-y-2">
-                    {(suggestions || []).map((suggestion, index) => (
-                      <div key={index} className="p-3 bg-gray-700 rounded-lg">
-                        <p className="text-sm text-gray-300">{suggestion}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Citations */}
-              <div className="mb-4">
-                <button
-                  onClick={() => toggleSection('citations')}
-                  className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Copy className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm font-semibold text-gray-200">Citations</span>
-                  </div>
-                  {collapsedSections.citations ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
-                </button>
-                
-                {!collapsedSections.citations && (
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <select
-                        value={selectedCitationStyle}
-                        onChange={(e) => setSelectedCitationStyle(e.target.value)}
-                        className="bg-gray-600 border border-gray-500 rounded px-2 py-1 text-xs text-gray-200"
-                      >
-                        <option value="APA">APA</option>
-                        <option value="MLA">MLA</option>
-                        <option value="Harvard">Harvard</option>
-                      </select>
-                      <span className="text-xs text-gray-400">Citation Style</span>
-                    </div>
-                    
-                    {citations.map(citation => (
-                      <div key={citation.id} className="p-3 bg-gray-700 rounded-lg">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-300 mb-1">{citation.citation}</p>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-400">{citation.style}</span>
-                              <span className="text-xs text-gray-500">
-                                {new Date(citation.addedAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => removeCitation(citation.id)}
-                            className="text-red-400 hover:text-red-300 text-xs"
-                          >
-                            Remove
-                          </button>
+                    {(suggestions || []).length > 0 ? (
+                      (suggestions || []).map((suggestion, index) => (
+                        <div key={index} className="p-3 bg-gray-700 rounded-lg">
+                          <p className="text-sm text-gray-300">{suggestion}</p>
                         </div>
+                      ))
+                    ) : (
+                      <div className="p-4 bg-gray-700 rounded-lg text-center">
+                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">No writing suggestions yet</p>
+                        <p className="text-xs text-gray-500">Start writing to get AI-powered suggestions</p>
                       </div>
-                    ))}
-                    
-                    {citations.length === 0 && (
-                      <p className="text-xs text-gray-400 text-center py-2">
-                        No citations added yet. Add sources in the Source Assistant.
-                      </p>
                     )}
                   </div>
                 )}
               </div>
+
+
 
               {/* Plagiarism Check */}
               <div className="mb-4">
@@ -1295,7 +1415,7 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4 text-green-400" />
+                    <Shield className="w-4 h-4 text-white" />
                     <span className="text-sm font-semibold text-gray-200">Plagiarism Check</span>
                   </div>
                   {collapsedSections.plagiarism ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
@@ -1305,16 +1425,26 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
                   <div className="mt-2 p-3 bg-gray-700 rounded-lg">
                     {!plagiarismResults ? (
                       <div className="text-center">
-                        <button
-                          onClick={handlePlagiarismCheck}
-                          className="btn-primary text-sm px-4 py-2"
-                        >
-                          <Shield className="w-4 h-4 mr-2" />
-                          Check for Plagiarism
-                        </button>
-                        <p className="text-xs text-gray-400 mt-2">
-                          Scan your document for potential plagiarism issues
-                        </p>
+                        {content && content.length > 20 ? (
+                          <>
+                            <button
+                              onClick={handlePlagiarismCheck}
+                              className="btn-primary text-sm px-4 py-2 w-full flex items-center justify-center"
+                            >
+                              <Shield className="w-6 h-6 mr-2" />
+                              Check for Plagiarism
+                            </button>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Scan your document for potential plagiarism issues
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400 mb-1">No content to check</p>
+                            <p className="text-xs text-gray-500">Write more content to enable plagiarism checking</p>
+                          </>
+                        )}
                       </div>
                     ) : plagiarismResults.isChecking ? (
                       <div className="text-center">
@@ -1370,6 +1500,56 @@ const Editor = ({ showNavbar, setShowNavbar }) => {
           )}
         </div>
       </div>
+
+      {/* Share Popup */}
+      {showSharePopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-96">
+            <h3 className="text-lg font-semibold text-gray-200 mb-4">Share Document</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Share Link</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={`https://origo.app/share/${documentId}`}
+                    readOnly
+                    className="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200"
+                  />
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`https://origo.app/share/${documentId}`)}
+                    className="btn-secondary px-3 py-2"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Access Settings</label>
+                <select className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200">
+                  <option value="public">Public - Anyone with the link can view</option>
+                  <option value="private">Private - Only you can access</option>
+                  <option value="restricted">Restricted - Only invited users can access</option>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowSharePopup(false)}
+                  className="px-4 py-2 text-gray-400 hover:text-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowSharePopup(false)}
+                  className="btn-primary px-4 py-2"
+                >
+                  Share
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

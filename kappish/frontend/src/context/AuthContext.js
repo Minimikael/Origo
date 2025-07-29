@@ -1,11 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../services/firebase';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -42,30 +35,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signIn = async (email, password) => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return { success: true, user: result.user };
-    } catch (error) {
-      return { success: false, error: error.message };
+    // Mock authentication for demo
+    if (email === 'demo@kappish.com' && password === 'demo123') {
+      const mockUser = {
+        uid: 'demo-user-123',
+        email: email,
+        displayName: 'Demo User'
+      };
+      setUser(mockUser);
+      return { success: true, user: mockUser };
+    } else {
+      return { success: false, error: 'Invalid credentials' };
     }
   };
 
   const signUp = async (email, password) => {
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      return { success: true, user: result.user };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+    // Mock registration for demo
+    const mockUser = {
+      uid: 'demo-user-123',
+      email: email,
+      displayName: email.split('@')[0]
+    };
+    setUser(mockUser);
+    return { success: true, user: mockUser };
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+    setUser(null);
+    return { success: true };
   };
 
   const value = {

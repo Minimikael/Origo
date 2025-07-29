@@ -156,6 +156,17 @@
   --color-shadow-light: rgba(0, 0, 0, 0.05);
   --color-shadow-medium: rgba(0, 0, 0, 0.1);
   --color-shadow-heavy: rgba(0, 0, 0, 0.2);
+  
+  /* Modern Glow Effects */
+  --glow-primary: rgba(0, 115, 230, 0.3);
+  --glow-secondary: rgba(255, 255, 255, 0.1);
+  --glow-success: rgba(80, 255, 116, 0.3);
+  --glow-warning: rgba(255, 190, 64, 0.3);
+  --glow-error: rgba(255, 64, 64, 0.3);
+  
+  /* Backdrop Blur */
+  --backdrop-blur: blur(10px);
+  --backdrop-blur-heavy: blur(20px);
 }
 
 /* Dark Theme Overrides */
@@ -437,14 +448,19 @@
   border: 1px solid transparent;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 
+    0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 0 0 4px rgba(0, 115, 230, 0.3),
+    0 0 20px rgba(0, 115, 230, 0.2);
 }
 
 .btn:disabled {
@@ -486,58 +502,82 @@
 
 /* Primary Button */
 .btn-primary {
-  background-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-600) 100%);
   color: var(--color-text-inverse);
-  border-color: var(--color-primary);
-  box-shadow: 0 1px 3px var(--color-shadow-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 115, 230, 0.3);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-  box-shadow: 0 4px 6px var(--color-shadow-medium);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 24px rgba(0, 115, 230, 0.4),
+    0 0 30px rgba(0, 115, 230, 0.2);
+  transform: translateY(-2px);
 }
 
 .btn-primary:active {
-  background-color: var(--color-primary-active);
-  border-color: var(--color-primary-active);
+  background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-800) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(0);
-  box-shadow: 0 2px 4px var(--color-shadow-medium);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 4px 16px rgba(0, 115, 230, 0.5);
 }
 
 .btn-primary:disabled {
-  background-color: var(--color-primary-disabled);
-  border-color: var(--color-primary-disabled);
+  background: linear-gradient(135deg, var(--color-primary-200) 0%, var(--color-primary-300) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
   color: var(--color-text-tertiary);
+  box-shadow: none;
 }
 
 /* Secondary Button */
 .btn-secondary {
   background-color: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  box-shadow: 0 1px 3px var(--color-shadow-light);
+  color: var(--color-text-inverse);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .btn-secondary:hover {
-  background-color: var(--color-primary);
-  color: var(--color-text-inverse);
-  box-shadow: 0 4px 6px var(--color-shadow-medium);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(255, 255, 255, 0.1);
   transform: translateY(-1px);
 }
 
 .btn-secondary:active {
-  background-color: var(--color-primary-active);
-  border-color: var(--color-primary-active);
+  background-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(0);
-  box-shadow: 0 2px 4px var(--color-shadow-medium);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:disabled {
   background-color: transparent;
-  border-color: var(--color-primary-disabled);
-  color: var(--color-primary-disabled);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+  box-shadow: none;
 }
 
 /* Tertiary Button */
@@ -710,4 +750,138 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ========================================
+   EMPTY STATES
+   ======================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.empty-state-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 0.25rem;
+  color: var(--color-text-secondary);
+}
+
+.empty-state-description {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
 } 
+
+/* ========================================
+   RICH TEXT EDITOR STYLES
+   ======================================== */
+
+[contenteditable="true"] {
+  outline: none;
+  line-height: 1.6;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem 0;
+  color: #ffffff !important;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 0.25rem;
+}
+
+[contenteditable="true"] h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem 0;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] strong {
+  font-weight: 700;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] em {
+  font-style: italic;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] u {
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+  text-decoration-thickness: 2px;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] li {
+  margin: 0.25rem 0;
+  padding-left: 1rem;
+  position: relative;
+  color: #ffffff !important;
+}
+
+[contenteditable="true"] li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+[contenteditable="true"] blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #ffffff !important;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 1rem;
+  border-radius: 0.25rem;
+}
+
+[contenteditable="true"] a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+}
+
+[contenteditable="true"] a:hover {
+  color: var(--color-primary-dark);
+}
+
+[contenteditable="true"] img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure all text elements stay white */
+[contenteditable="true"] * {
+  color: #ffffff !important;
+}
+
+/* Override any inherited colors */
+[contenteditable="true"] p,
+[contenteditable="true"] div,
+[contenteditable="true"] span,
+[contenteditable="true"] text {
+  color: #ffffff !important;
+}

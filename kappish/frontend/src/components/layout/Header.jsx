@@ -38,15 +38,6 @@ const Header = ({ onMenuClick }) => {
         <div className="flex items-center space-x-3">
           {user ? (
             <div className="flex items-center space-x-2">
-              <Button 
-                variant="secondary" 
-                size="sm"
-                icon={<User className="w-4 h-4" />}
-                iconPosition="left"
-              >
-                Create New Project
-              </Button>
-              
               <div className="relative">
                 <button 
                   onClick={handleProfileClick}
@@ -92,10 +83,35 @@ const Header = ({ onMenuClick }) => {
                             // Navigate to settings
                             setProfileDropdownOpen(false);
                           }}
-                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
+                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 transition-colors cursor-not-allowed"
+                          disabled
                         >
                           <Settings className="w-4 h-4" />
                           <span>Settings</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            // Navigate to support
+                            setProfileDropdownOpen(false);
+                          }}
+                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 transition-colors cursor-not-allowed"
+                          disabled
+                        >
+                          <span className="w-4 h-4">?</span>
+                          <span>Support</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            // Navigate to billing
+                            setProfileDropdownOpen(false);
+                          }}
+                          className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-400 hover:bg-gray-700 transition-colors cursor-not-allowed"
+                          disabled
+                        >
+                          <span className="w-4 h-4">$</span>
+                          <span>Billing</span>
                         </button>
                         
                         <div className="border-t border-gray-700 my-1"></div>
