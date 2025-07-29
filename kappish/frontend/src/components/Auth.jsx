@@ -10,7 +10,6 @@ const Auth = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(true)
-  const [showNameStep, setShowNameStep] = useState(false)
   const [userName, setUserName] = useState('')
   const [currentStep, setCurrentStep] = useState('loading') // 'loading', 'passkey', 'auth', 'name'
   
@@ -122,7 +121,6 @@ const Auth = () => {
       if (error) {
         setError(error.message)
       } else {
-        setShowNameStep(false)
         setUserName('')
         setError('')
         // Redirect to dashboard
