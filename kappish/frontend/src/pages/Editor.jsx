@@ -94,6 +94,22 @@ const Editor = () => {
   
   const textareaRef = useRef(null);
 
+  const handleSave = useCallback(async () => {
+    if (!documentId) return;
+    
+    setIsSaving(true);
+    try {
+      await updateDocument(documentId, { content, title });
+      setTimeout(() => {
+        setIsSaving(false);
+        navigate('/'); // Redirect to home page after saving
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving document:', error);
+      setIsSaving(false);
+    }
+  }, [documentId, content, title, updateDocument, navigate]);
+
   useEffect(() => {
     if (documentId) {
       const document = currentDocument;
@@ -179,22 +195,6 @@ const Editor = () => {
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
   };
-
-  const handleSave = useCallback(async () => {
-    if (!documentId) return;
-    
-    setIsSaving(true);
-    try {
-      await updateDocument(documentId, { content, title });
-      setTimeout(() => {
-        setIsSaving(false);
-        navigate('/'); // Redirect to home page after saving
-      }, 1000);
-    } catch (error) {
-      console.error('Error saving document:', error);
-      setIsSaving(false);
-    }
-  }, [documentId, content, title, updateDocument, navigate]);
 
   const applyFormatting = (format) => {
     const editor = textareaRef.current;
