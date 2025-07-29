@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDocument } from '../../context/DocumentContext';
+import { useDocuments } from '../../context/DocumentContext';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -14,10 +14,12 @@ import {
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Typography, { BodySmall } from '../ui/Typography';
+import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isOpen, onToggle }) => {
   const navigate = useNavigate();
-  const { createDocument, documents } = useDocument();
+  const { user } = useAuth();
+  const { createDocument, documents } = useDocuments();
 
   const handleCreateDocument = async () => {
     const newDoc = await createDocument();

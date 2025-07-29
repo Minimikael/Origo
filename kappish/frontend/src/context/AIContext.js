@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useDocument } from './DocumentContext';
+import { useDocuments } from './DocumentContext';
+import { useAuth } from './AuthContext';
 
 const AIContext = createContext();
 
@@ -12,7 +13,8 @@ export const useAI = () => {
 };
 
 export const AIProvider = ({ children }) => {
-  const { currentDocument } = useDocument();
+  const { user } = useAuth();
+  const { currentDocument, updateDocument } = useDocuments();
   const [aiAnalysis, setAiAnalysis] = useState({
     argumentStrength: 0,
     factCheckStatus: 'pending',
