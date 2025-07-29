@@ -1,7 +1,7 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "cd kappish/frontend && npm install && npm run build",
   "outputDirectory": "kappish/frontend/build",
-  "installCommand": "npm install",
+  "installCommand": "cd kappish/frontend && npm install",
   "framework": "create-react-app",
   "rewrites": [
     {
