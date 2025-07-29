@@ -8,18 +8,15 @@ import {
   Edit,
   CheckCircle,
   Archive,
-  Filter,
   Tag
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useDocuments } from '../context/DocumentContext'
-import Button from '../components/ui/Button'
 
 const Dashboard = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { documents, createDocument, deleteDocument, loading } = useDocuments()
-  const [editingDoc, setEditingDoc] = useState(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null)
   const [showActionMenu, setShowActionMenu] = useState(null)
 

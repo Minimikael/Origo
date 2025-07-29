@@ -54,7 +54,6 @@ const Editor = () => {
     highlightedText, 
     handleSuggestionClick, 
     clearHighlight,
-    generateCitation,
     checkPlagiarism,
     plagiarismResults
   } = useAI();
@@ -146,7 +145,7 @@ const Editor = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [content]);
+  }, [content, handleSave]);
 
   // Set initial content when component mounts or content changes externally
   useEffect(() => {
@@ -421,9 +420,7 @@ const Editor = () => {
   };
 
   // Placeholder for future implementation
-  const findSourcesTogether = () => {
-    // TODO: Implement source finding functionality
-  };
+  // TODO: Implement source finding functionality
 
   // Research functions
   const startResearch = () => {
@@ -499,9 +496,7 @@ const Editor = () => {
     // TODO: Implement citation functionality
   };
 
-  const removeCitation = (id) => {
-    // TODO: Implement citation removal
-  };
+  // TODO: Implement citation removal
 
   // Plagiarism checking
   const handlePlagiarismCheck = () => {

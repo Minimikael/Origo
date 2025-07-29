@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useDocuments } from './DocumentContext';
-import { useAuth } from './AuthContext';
 
 const AIContext = createContext();
 
@@ -277,43 +276,9 @@ export const AIProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [currentDocument?.content]);
 
-  const analyzeContent = async (content) => {
-    // This would integrate with actual AI API
-    setAiAnalysis(prev => ({ ...prev, isAnalyzing: true }));
-    
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const analysis = {
-          argumentStrength: Math.floor(Math.random() * 100),
-          factCheckStatus: 'completed',
-          suggestions: ['Add more evidence', 'Strengthen your conclusion'],
-          sources: []
-        };
-        
-        setAiAnalysis({ ...analysis, isAnalyzing: false });
-        resolve(analysis);
-      }, 1000);
-    });
-  };
-
-  const getSourceSuggestions = async (topic) => {
-    // This would call external APIs for source discovery
-    return [
-      { title: 'Academic Source 1', url: '#', relevance: 0.9 },
-      { title: 'Research Paper 2', url: '#', relevance: 0.8 },
-      { title: 'Expert Opinion 3', url: '#', relevance: 0.7 }
-    ];
-  };
-
-  const factCheckClaim = async (claim) => {
-    // This would integrate with fact-checking APIs
-    return {
-      status: Math.random() > 0.5 ? 'verified' : 'unverified',
-      confidence: Math.random(),
-      sources: []
-    };
-  };
+  // TODO: Implement AI content analysis functionality
+  // TODO: Implement source suggestions functionality  
+  // TODO: Implement fact checking functionality
 
   const value = {
     aiAnalysis,

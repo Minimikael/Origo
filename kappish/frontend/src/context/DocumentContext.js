@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { documentService } from '../services/supabase'
 import { useAuth } from './AuthContext'
 
@@ -18,7 +18,7 @@ export const DocumentProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
 
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     if (!user) return
     
     setLoading(true)
@@ -30,11 +30,11 @@ export const DocumentProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   useEffect(() => {
     loadDocuments()
-  }, [user, loadDocuments])
+  }, [loadDocuments])
 
   const createDocument = async (title, content = '') => {
     if (!user) throw new Error('User not authenticated')

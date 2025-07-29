@@ -4,22 +4,12 @@ import {
   Menu, 
   X, 
   Plus, 
-  Search, 
   Settings, 
   User, 
   LogOut,
   ChevronDown,
   FolderOpen,
-  FileText,
-  Clock,
-  Star,
-  Trash2,
-  MoreVertical,
-  Edit,
-  Copy,
-  Share,
-  Archive,
-  Tag
+  FileText
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useDocuments } from '../../context/DocumentContext'
