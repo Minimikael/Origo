@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDocuments } from '../context/DocumentContext';
 import { useAI } from '../context/AIContext';
@@ -139,6 +139,9 @@ const Editor = () => {
             // Select all
             document.execCommand('selectAll');
             break;
+          default:
+            // Handle other key combinations
+            break;
         }
       }
     };
@@ -177,7 +180,7 @@ const Editor = () => {
     setTitle(e.target.value);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!documentId) return;
     
     setIsSaving(true);
@@ -191,7 +194,7 @@ const Editor = () => {
       console.error('Error saving document:', error);
       setIsSaving(false);
     }
-  };
+  }, [documentId, content, title, updateDocument, navigate]);
 
   const applyFormatting = (format) => {
     const editor = textareaRef.current;
@@ -250,6 +253,9 @@ const Editor = () => {
             return;
           }
           break;
+        default:
+          // Handle unknown format
+          break;
       }
       
       const tempDiv = document.createElement('div');
@@ -293,14 +299,17 @@ const Editor = () => {
           return;
         }
         break;
-      case 'image':
-        const imageUrl = prompt('Enter image URL:');
-        if (imageUrl) {
-          formattedText = `<img src="${imageUrl}" alt="${selectedText}" style="max-width: 100%; height: auto;" />`;
-        } else {
-          return;
-        }
-        break;
+              case 'image':
+          const imageUrl = prompt('Enter image URL:');
+          if (imageUrl) {
+            formattedText = `<img src="${imageUrl}" alt="${selectedText}" style="max-width: 100%; height: auto;" />`;
+          } else {
+            return;
+          }
+          break;
+        default:
+          // Handle unknown format
+          break;
     }
 
     const tempDiv = document.createElement('div');
@@ -336,6 +345,9 @@ const Editor = () => {
           break;
         case 'document':
           aiResponse = "Your document structure is clear, but I recommend adding a brief methodology section. This would help readers understand your research approach and increase the credibility of your findings.";
+          break;
+        default:
+          aiResponse = "I'm here to help with your document. How can I assist you today?";
           break;
       }
 
@@ -391,14 +403,21 @@ const Editor = () => {
           description: 'Get research insights and data',
           color: 'text-purple-400'
         };
-      case 'document':
-        return {
-          icon: <FileText className="w-4 h-4" />,
-          title: 'Document Assistant',
-          description: 'Structure and organize your writing',
-          color: 'text-green-400'
-        };
-    }
+              case 'document':
+          return {
+            icon: <FileText className="w-4 h-4" />,
+            title: 'Document Assistant',
+            description: 'Structure and organize your writing',
+            color: 'text-green-400'
+          };
+        default:
+          return {
+            icon: <FileText className="w-4 h-4" />,
+            title: 'Assistant',
+            description: 'General assistance',
+            color: 'text-gray-400'
+          };
+      }
   };
 
   // Source management functions
