@@ -15,7 +15,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [passkeyVerified, setPasskeyVerified] = useState(false)
 
   useEffect(() => {
     // Check for existing session
@@ -40,11 +39,8 @@ export const AuthProvider = ({ children }) => {
         console.log('Auth state changed:', event, session)
         if (session?.user) {
           setUser(session.user)
-          // Reset passkey verification when user changes
-          setPasskeyVerified(false)
         } else {
           setUser(null)
-          setPasskeyVerified(false)
         }
         setLoading(false)
       }
@@ -74,29 +70,18 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       await userService.signOut()
-      setPasskeyVerified(false)
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
     }
   }
 
-  const verifyPasskey = (passkey) => {
-    if (passkey === "#mosten69!yxz") {
-      setPasskeyVerified(true)
-      return true
-    }
-    return false
-  }
-
   const value = {
     user,
     loading,
-    passkeyVerified,
     signIn,
     signUp,
-    signOut,
-    verifyPasskey
+    signOut
   }
 
   return (
