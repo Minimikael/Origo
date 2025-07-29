@@ -4,12 +4,15 @@ import { Menu, User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import Button from '../ui/Button';
 
 const Header = ({ onMenuClick }) => {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    setProfileDropdownOpen(false);
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleProfileClick = () => {
@@ -117,7 +120,7 @@ const Header = ({ onMenuClick }) => {
                         <div className="border-t border-gray-700 my-1"></div>
                         
                         <button
-                          onClick={handleLogout}
+                          onClick={handleSignOut}
                           className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
