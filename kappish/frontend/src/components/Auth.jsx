@@ -10,7 +10,7 @@ const Auth = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [userName, setUserName] = useState('')
-  const [currentStep, setCurrentStep] = useState('loading') // 'loading', 'passkey', 'signup', 'username'
+  const [currentStep, setCurrentStep] = useState('loading') // 'loading', 'passkey', 'signup', 'username', 'email-confirm'
   
   const { user } = useAuth()
 
@@ -62,8 +62,8 @@ const Auth = () => {
       if (error) {
         setError(error.message)
       } else {
-        // Move to username step
-        setCurrentStep('username')
+        // Show email confirmation step
+        setCurrentStep('email-confirm')
       }
     } catch (error) {
       setError(error.message)
@@ -215,6 +215,50 @@ const Auth = () => {
               </Button>
             </div>
           </form>
+        </div>
+      </div>
+    )
+  }
+
+  // Step 2.5: Email confirmation
+  if (currentStep === 'email-confirm') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+          <div>
+            <h2 className="text-center text-3xl font-bold text-white">
+              Check Your Email
+            </h2>
+            <p className="mt-2 text-center text-gray-300">
+              We've sent a confirmation link to <strong>{email}</strong>
+            </p>
+            <p className="mt-4 text-center text-gray-400 text-sm">
+              Please click the link in your email to confirm your account, then return here to continue.
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            <Button
+              onClick={() => {
+                // Check if user is now authenticated
+                if (user) {
+                  setCurrentStep('username')
+                } else {
+                  setError('Please confirm your email first')
+                }
+              }}
+              fullWidth
+              disabled={loading}
+            >
+              I've Confirmed My Email
+            </Button>
+            
+            {error && (
+              <div className="text-red-400 text-sm text-center">
+                {error}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )
