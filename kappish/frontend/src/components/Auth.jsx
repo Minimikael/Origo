@@ -139,7 +139,7 @@ const Auth = () => {
     }
   }
 
-  // Show passkey verification first
+  // Show passkey verification first - this is a complete gate
   if (showPasskeyStep) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -229,6 +229,11 @@ const Auth = () => {
         </div>
       </div>
     )
+  }
+
+  // Only show sign-up/sign-in options after passkey verification
+  if (!passkeyVerified) {
+    return null // Don't show anything if passkey isn't verified
   }
 
   // Show sign-up/sign-in options after passkey verification
