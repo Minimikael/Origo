@@ -1,177 +1,230 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useDocuments } from '../../context/DocumentContext';
+import React, { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus,
-  Folder,
-  CreditCard,
-  Settings,
-  HelpCircle,
-  Home,
-  FileText
-} from 'lucide-react';
-import Button from '../ui/Button';
-import Typography, { BodySmall } from '../ui/Typography';
-import { useAuth } from '../../context/AuthContext';
+  Menu, 
+  X, 
+  Plus, 
+  Search, 
+  Settings, 
+  User, 
+  LogOut,
+  ChevronDown,
+  FolderOpen,
+  FileText,
+  Clock,
+  Star,
+  Trash2,
+  MoreVertical,
+  Edit,
+  Copy,
+  Share,
+  Archive,
+  Tag
+} from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { useDocuments } from '../../context/DocumentContext'
+import Button from '../ui/Button'
 
-const Sidebar = ({ isOpen, onToggle }) => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { createDocument, documents } = useDocuments();
+const Sidebar = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
+  const location = useLocation()
+  const { user, signOut } = useAuth()
+  const { createDocument, documents } = useDocuments()
 
   const handleCreateDocument = async () => {
-    const newDoc = await createDocument();
-    navigate(`/editor/${newDoc.id}`);
-  };
+    try {
+      const newDoc = await createDocument('Untitled Document', '')
+      // Navigate to the new document
+      window.location.href = `/editor/${newDoc.id}`
+    } catch (error) {
+      console.error('Error creating document:', error)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   const workspaceSections = [
     {
-      id: 'projects',
-      label: 'Projects',
-      icon: <Folder className="w-5 h-5" />,
-      action: () => navigate('/'),
-      active: true,
-      count: documents?.length || 0
-    }
-  ];
-
-  const workspaceItems = [
-    {
-      id: 'billing',
-      label: 'Billing',
-      icon: <CreditCard className="w-5 h-5" />,
-      action: () => navigate('/billing'),
-      empty: true
+      title: 'Recent',
+      items: documents.slice(0, 5).map(doc => ({
+        id: doc.id,
+        name: doc.title,
+        icon: FileText,
+        href: `/editor/${doc.id}`,
+        type: 'document'
+      }))
     },
     {
-      id: 'settings',
-      label: 'Settings',
-      icon: <Settings className="w-5 h-5" />,
-      action: () => navigate('/settings')
+      title: 'Quick Access',
+      items: [
+        { id: 'dashboard', name: 'Dashboard', icon: FolderOpen, href: '/dashboard', type: 'link' },
+        { id: 'settings', name: 'Settings', icon: Settings, href: '/settings', type: 'link' }
+      ]
     }
-  ];
+  ]
+
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: FolderOpen },
+    { name: 'Settings', href: '/settings', icon: Settings }
+  ]
 
   return (
-    <div className={`h-full bg-gray-800 border-r border-gray-700 shadow-xl transition-all duration-300 ease-in-out ${
-      isOpen ? 'w-64' : 'w-16'
-    }`}>
-      {/* Header with toggle button */}
-      <div className="flex items-center justify-between p-4">
-        {isOpen && (
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">O</span>
-            </div>
-            <h2 className="text-lg font-bold text-gray-100">Origo</h2>
-          </div>
-        )}
-        <button onClick={onToggle} className="p-2 rounded-lg hover:bg-gray-700 transition-colors">
-          {isOpen ? <ChevronLeft className="w-5 h-5 text-gray-300" /> : <ChevronRight className="w-5 h-5 text-gray-300" />}
-        </button>
-      </div>
-
-      {/* Create New Project Button */}
-      <div className="p-4">
-        <Button
-          onClick={handleCreateDocument}
-          variant="primary"
-          size="md"
-          icon={<Plus className="w-4 h-4" />}
-          iconPosition="left"
-          fullWidth
-          className="text-sm font-medium"
-        >
-          {isOpen && "New Project"}
-        </Button>
-      </div>
-
-      {/* Navigation Items */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Workspace Section */}
-        <div className="p-4">
-          {isOpen && (
-            <div className="mb-4">
-              <BodySmall className="text-gray-400 uppercase tracking-wide">
-                Workspace
-              </BodySmall>
-            </div>
-          )}
-          
-          <div className="space-y-1">
-            {workspaceSections.map((item) => (
-              <button
-                key={item.id}
-                onClick={item.action}
-                className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors text-left ${
-                  item.active 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-300 hover:text-gray-200 hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`flex-shrink-0 ${
-                    item.active ? 'text-white' : 'text-gray-400'
-                  }`}>
-                    {item.icon}
-                  </div>
-                  {isOpen && (
-                    <span className="text-sm font-medium">{item.label}</span>
-                  )}
-                </div>
-                {isOpen && item.count !== undefined && (
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    item.active 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-gray-600 text-gray-300'
-                  }`}>
-                    {item.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Workspace Items */}
-        <div className="p-4">
-          <div className="space-y-1">
-            {workspaceItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={item.action}
-                className={`w-full flex items-center justify-between p-2 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0 text-gray-400">
-                    {item.icon}
-                  </div>
-                  {isOpen && (
-                    <span className="text-sm font-medium">{item.label}</span>
-                  )}
-                </div>
-                {isOpen && item.empty && (
-                  <span className="text-xs text-gray-500">(empty)</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Support Link (bottom) */}
-      <div className="p-4">
+    <>
+      {/* Mobile menu button */}
+      <div className="lg:hidden">
         <button
-          onClick={() => navigate('/support')}
-          className={`w-full flex items-center space-x-3 p-2 rounded-lg transition-colors text-left text-gray-300 hover:text-gray-200 hover:bg-gray-700`}
+          onClick={() => setIsOpen(!isOpen)}
+          className="text-gray-400 hover:text-white focus:outline-none focus:text-white"
         >
-          <HelpCircle className="w-5 h-5 text-gray-400" />
-          {isOpen && <span className="text-sm font-medium">Support</span>}
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
-    </div>
-  );
-};
 
-export default Sidebar; 
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">O</span>
+              </div>
+              <h1 className="text-xl font-semibold text-gray-100">Origo</h1>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden text-gray-400 hover:text-white"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`
+                    flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                    ${isActive 
+                      ? 'bg-blue-600 text-white' 
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }
+                  `}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <item.icon size={18} />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          {/* Workspace Sections */}
+          <div className="px-4 pb-6 space-y-6">
+            {workspaceSections.map((section) => (
+              <div key={section.title}>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  {section.title}
+                </h3>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = location.pathname === item.href
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.href}
+                        className={`
+                          flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors
+                          ${isActive 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          }
+                        `}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <item.icon size={16} />
+                        <span className="truncate">{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="px-4 pb-4">
+            <Button
+              onClick={handleCreateDocument}
+              className="w-full flex items-center justify-center space-x-2"
+            >
+              <Plus size={16} />
+              <span>New Document</span>
+            </Button>
+          </div>
+
+          {/* User Profile */}
+          <div className="px-4 pb-4 border-t border-gray-700 pt-4">
+            <div className="relative">
+              <button
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+              >
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium text-gray-200">
+                    {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {user?.email}
+                  </div>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {profileDropdownOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 bg-gray-800 rounded-lg shadow-lg border border-gray-700">
+                  <div className="py-2">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                    >
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  )
+}
+
+export default Sidebar 
