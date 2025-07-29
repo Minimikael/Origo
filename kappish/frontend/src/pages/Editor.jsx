@@ -44,7 +44,7 @@ import {
 } from 'lucide-react';
 
 const Editor = () => {
-  const { currentDocument, updateDocument, selectDocument } = useDocuments()
+  const { currentDocument, updateDocument } = useDocuments()
   const { documentId } = useParams();
   const navigate = useNavigate();
   const { 
@@ -420,14 +420,9 @@ const Editor = () => {
     setSources(prev => prev.filter(source => source.id !== id));
   };
 
+  // Placeholder for future implementation
   const findSourcesTogether = () => {
-    const newMessage = {
-      id: Date.now(),
-      text: "Let's find academic sources together. What topic would you like to research?",
-      sender: 'ai',
-      timestamp: new Date()
-    };
-    setChatMessages(prev => [...prev, newMessage]);
+    // TODO: Implement source finding functionality
   };
 
   // Research functions
@@ -499,22 +494,13 @@ const Editor = () => {
     return 'text-red-400';
   };
 
-  // Citation functions
-  const [citations, setCitations] = useState([]);
+  // Citation functions - placeholder for future implementation
   const addCitation = (source) => {
-    const citation = generateCitation(source, selectedCitationStyle);
-    const newCitation = {
-      id: Date.now(),
-      source,
-      citation,
-      style: selectedCitationStyle,
-      addedAt: new Date()
-    };
-    setCitations(prev => [...prev, newCitation]);
+    // TODO: Implement citation functionality
   };
 
   const removeCitation = (id) => {
-    setCitations(prev => prev.filter(citation => citation.id !== id));
+    // TODO: Implement citation removal
   };
 
   // Plagiarism checking

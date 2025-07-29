@@ -14,19 +14,9 @@ export const useDocuments = () => {
 
 export const DocumentProvider = ({ children }) => {
   const [documents, setDocuments] = useState([])
-  const [loading, setLoading] = useState(false)
   const [currentDocument, setCurrentDocument] = useState(null)
+  const [loading, setLoading] = useState(false)
   const { user } = useAuth()
-
-  // Load documents when user changes
-  useEffect(() => {
-    if (user) {
-      loadDocuments()
-    } else {
-      setDocuments([])
-      setCurrentDocument(null)
-    }
-  }, [user])
 
   const loadDocuments = async () => {
     if (!user) return
@@ -42,13 +32,16 @@ export const DocumentProvider = ({ children }) => {
     }
   }
 
+  useEffect(() => {
+    loadDocuments()
+  }, [user, loadDocuments])
+
   const createDocument = async (title, content = '') => {
     if (!user) throw new Error('User not authenticated')
     
     try {
       const newDoc = await documentService.createDocument(user.id, title, content)
       setDocuments(prev => [newDoc, ...prev])
-      setCurrentDocument(newDoc)
       return newDoc
     } catch (error) {
       console.error('Error creating document:', error)
@@ -103,8 +96,7 @@ export const DocumentProvider = ({ children }) => {
     createDocument,
     updateDocument,
     deleteDocument,
-    selectDocument,
-    loadDocuments
+    selectDocument
   }
 
   return (

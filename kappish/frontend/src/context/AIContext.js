@@ -13,8 +13,7 @@ export const useAI = () => {
 };
 
 export const AIProvider = ({ children }) => {
-  const { user } = useAuth();
-  const { currentDocument, updateDocument } = useDocuments();
+  const { currentDocument } = useDocuments();
   const [aiAnalysis, setAiAnalysis] = useState({
     argumentStrength: 0,
     factCheckStatus: 'pending',
@@ -32,7 +31,6 @@ export const AIProvider = ({ children }) => {
 
   const [auditSuggestions, setAuditSuggestions] = useState([]);
   const [highlightedText, setHighlightedText] = useState(null);
-  const [citations, setCitations] = useState([]);
   const [plagiarismResults, setPlagiarismResults] = useState(null);
 
   // Generate citation in different formats
@@ -326,8 +324,7 @@ export const AIProvider = ({ children }) => {
     clearHighlight,
     generateCitation,
     checkPlagiarism,
-    plagiarismResults,
-    citations
+    plagiarismResults
   };
 
   return (

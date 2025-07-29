@@ -22,7 +22,9 @@ export const AuthProvider = ({ children }) => {
     const checkUser = async () => {
       try {
         const currentUser = await userService.getCurrentUser()
-        setUser(currentUser)
+        if (currentUser) {
+          setUser(currentUser)
+        }
       } catch (error) {
         console.log('No existing session')
       } finally {
@@ -53,8 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      const { data, error } = await userService.signIn(email, password)
-      if (error) throw error
+      await userService.signIn(email, password)
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -63,8 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password) => {
     try {
-      const { data, error } = await userService.signUp(email, password)
-      if (error) throw error
+      await userService.signUp(email, password)
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
