@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { userService } from '../services/supabase'
+import { supabase } from '../services/supabase'
 
 const AuthContext = createContext()
 
@@ -29,12 +30,27 @@ export const AuthProvider = ({ children }) => {
     }
 
     checkUser()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session)
+        if (session?.user) {
+          setUser(session.user)
+        } else {
+          setUser(null)
+        }
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const signIn = async (email, password) => {
     try {
-      const { user } = await userService.signIn(email, password)
-      setUser(user)
+      const { data, error } = await userService.signIn(email, password)
+      if (error) throw error
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -43,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async (email, password) => {
     try {
-      const { user } = await userService.signUp(email, password)
-      setUser(user)
+      const { data, error } = await userService.signUp(email, password)
+      if (error) throw error
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -54,7 +70,6 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       await userService.signOut()
-      setUser(null)
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
