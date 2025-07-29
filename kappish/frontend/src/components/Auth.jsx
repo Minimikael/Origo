@@ -13,7 +13,6 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(true)
   const [showNameStep, setShowNameStep] = useState(false)
   const [userName, setUserName] = useState('')
-  const [isEmailSignUp, setIsEmailSignUp] = useState(false)
   const [passkeyVerified, setPasskeyVerified] = useState(false)
   
   const { user } = useAuth()
@@ -52,7 +51,6 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true)
     setError('')
-    setIsEmailSignUp(false)
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -76,7 +74,6 @@ const Auth = () => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setIsEmailSignUp(true)
 
     try {
       const { error } = isSignUp 
