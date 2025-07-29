@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDocument } from '../context/DocumentContext';
+import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   Plus, 
@@ -27,7 +27,7 @@ import {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { documents, createDocument } = useDocument();
+  const { documents, createDocument, deleteDocument, loading } = useDocuments();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');

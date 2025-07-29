@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDocument } from '../context/DocumentContext';
+import { useDocuments } from '../context/DocumentContext';
 import { useAI } from '../context/AIContext';
 import { 
   Home, 
@@ -44,9 +44,9 @@ import {
 } from 'lucide-react';
 
 const Editor = () => {
+  const { currentDocument, updateDocument, selectDocument } = useDocuments()
   const { documentId } = useParams();
   const navigate = useNavigate();
-  const { documents, updateDocument } = useDocument();
   const { 
     argumentStrength, 
     suggestions = [], 
@@ -97,13 +97,13 @@ const Editor = () => {
 
   useEffect(() => {
     if (documentId) {
-      const document = documents.find(doc => doc.id === documentId);
+      const document = currentDocument;
       if (document) {
         setContent(document.content || '');
         setTitle(document.title || '');
       }
     }
-  }, [documentId, documents]);
+  }, [documentId, currentDocument]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
