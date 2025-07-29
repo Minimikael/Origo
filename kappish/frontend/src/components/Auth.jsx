@@ -6,43 +6,40 @@ import { supabase } from '../services/supabase'
 const Auth = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showPasskeyStep, setShowPasskeyStep] = useState(false)
   const [passkey, setPasskey] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(true)
   const [showNameStep, setShowNameStep] = useState(false)
   const [userName, setUserName] = useState('')
-  const [passkeyVerified, setPasskeyVerified] = useState(false)
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [currentStep, setCurrentStep] = useState('loading') // 'loading', 'passkey', 'auth', 'name'
   
   const { user } = useAuth()
 
-  // Check if passkey has been verified on this computer
+  // Initialize the component and determine which step to show
   useEffect(() => {
-    const hasVerifiedPasskey = localStorage.getItem('origo_passkey_verified')
-    if (hasVerifiedPasskey === 'true') {
-      setPasskeyVerified(true)
+    const hasVerifiedPasskey = localStorage.getItem('origo_passkey_verified') === 'true'
+    
+    if (hasVerifiedPasskey) {
+      setCurrentStep('auth')
     } else {
-      setShowPasskeyStep(true)
+      setCurrentStep('passkey')
     }
-    setIsInitialized(true)
   }, [])
 
   // If user is authenticated and passkey is verified, redirect to dashboard
   useEffect(() => {
-    if (user && passkeyVerified) {
+    if (user && currentStep === 'auth') {
       window.location.href = '/'
     }
-  }, [user, passkeyVerified])
+  }, [user, currentStep])
 
   const handlePasskeySubmit = (e) => {
     e.preventDefault()
     if (passkey === '#mosten69!yxz') {
       // Remember that passkey has been verified on this computer
       localStorage.setItem('origo_passkey_verified', 'true')
-      setPasskeyVerified(true)
-      setShowPasskeyStep(false)
+      setCurrentStep('auth')
       setPasskey('')
       setError('')
     } else {
@@ -95,7 +92,7 @@ const Auth = () => {
         setError(error.message)
       } else {
         // For email sign-ups, show name input step
-        setShowNameStep(true)
+        setCurrentStep('name')
       }
     } catch (error) {
       setError(error.message)
@@ -138,8 +135,8 @@ const Auth = () => {
     }
   }
 
-  // Show loading while initializing
-  if (!isInitialized) {
+  // Show loading while determining which step to show
+  if (currentStep === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-white">Loading...</div>
@@ -148,7 +145,7 @@ const Auth = () => {
   }
 
   // Show passkey verification first - this is a complete gate
-  if (showPasskeyStep) {
+  if (currentStep === 'passkey') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg border border-gray-700">
@@ -194,7 +191,7 @@ const Auth = () => {
   }
 
   // Show name input step for email sign-ups
-  if (showNameStep) {
+  if (currentStep === 'name') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg border border-gray-700">
