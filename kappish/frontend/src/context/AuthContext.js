@@ -1,81 +1,77 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { userService } from '../services/supabase'
 
-const AuthContext = createContext();
+const AuthContext = createContext()
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
+  return context
+}
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // For demonstration purposes, provide a mock user
-    const mockUser = {
-      uid: 'demo-user-123',
-      email: 'demo@kappish.com',
-      displayName: 'Demo User'
-    };
-    
-    // Set mock user immediately for demo
-    setUser(mockUser);
-    setLoading(false);
-    
-    // Comment out Firebase auth for demo
-    // const unsubscribe = onAuthStateChanged(auth, (user) => {
-    //   setUser(user);
-    //   setLoading(false);
-    // });
-    // return unsubscribe;
-  }, []);
+    // Check for existing session
+    const checkUser = async () => {
+      try {
+        const currentUser = await userService.getCurrentUser()
+        setUser(currentUser)
+      } catch (error) {
+        console.log('No existing session')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [])
 
   const signIn = async (email, password) => {
-    // Mock authentication for demo
-    if (email === 'demo@kappish.com' && password === 'demo123') {
-      const mockUser = {
-        uid: 'demo-user-123',
-        email: email,
-        displayName: 'Demo User'
-      };
-      setUser(mockUser);
-      return { success: true, user: mockUser };
-    } else {
-      return { success: false, error: 'Invalid credentials' };
+    try {
+      const { user } = await userService.signIn(email, password)
+      setUser(user)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
     }
-  };
+  }
 
   const signUp = async (email, password) => {
-    // Mock registration for demo
-    const mockUser = {
-      uid: 'demo-user-123',
-      email: email,
-      displayName: email.split('@')[0]
-    };
-    setUser(mockUser);
-    return { success: true, user: mockUser };
-  };
+    try {
+      const { user } = await userService.signUp(email, password)
+      setUser(user)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
 
-  const logout = async () => {
-    setUser(null);
-    return { success: true };
-  };
+  const signOut = async () => {
+    try {
+      await userService.signOut()
+      setUser(null)
+      return { success: true }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
 
   const value = {
     user,
     loading,
     signIn,
     signUp,
-    logout,
-  };
+    signOut
+  }
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
-  );
-}; 
+  )
+} 
