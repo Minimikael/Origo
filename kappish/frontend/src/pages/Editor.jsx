@@ -43,7 +43,8 @@ import {
   Sun,
   Moon,
   Type,
-  Download
+  Download,
+  Home
 } from 'lucide-react';
 
 const Editor = () => {

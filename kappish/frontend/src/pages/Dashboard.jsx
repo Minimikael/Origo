@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, CheckSquare, Cake } from 'lucide-react';
+import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle } from 'lucide-react';
 import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -43,7 +43,7 @@ const Dashboard = () => {
       const newDoc = await createDocument(newDocumentTitle.trim(), '');
       setShowCreateModal(false);
       setNewDocumentTitle('');
-      // Refresh the page and then navigate to the new document
+      // Force a complete page refresh to ensure the new document is loaded
       window.location.href = `/editor/${newDoc.id}`;
     } catch (error) {
       console.error('Error creating document:', error);
@@ -139,8 +139,8 @@ const Dashboard = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-100 mb-2 flex items-center space-x-2">
-          <Cake className="w-6 h-6 text-pink-400" />
           <span>Let's be creative, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>
+          <Cake className="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
         </h1>
       </div>
 
@@ -272,7 +272,7 @@ const Dashboard = () => {
                     )}
                     <button
                       onClick={(e) => handleDeleteDocument(doc.id, e)}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-500/20"
                     >
                       <Trash2 size={14} />
                       <span>Delete</span>
