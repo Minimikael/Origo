@@ -3,6 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle, Sun, Moon, FileText, Plus } from 'lucide-react';
 import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
+// Test comment: Testing GitHub Desktop → Vercel deployment workflow
+import { 
+  Plus, 
+  Search, 
+  FileText, 
+  Clock, 
+  CheckCircle, 
+  Archive, 
+  Filter,
+  MoreVertical,
+  Trash2,
+  Edit3
+} from 'lucide-react';
 
 const Dashboard = () => {
   const { documents, createDocument, deleteDocument, archiveDocument, restoreDocument, markAsCompleted, loading } = useDocuments();
