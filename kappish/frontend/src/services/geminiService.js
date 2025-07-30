@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
 import { sanitizeForAIPrompt } from '../utils/sanitization'
-import { API_CONSTANTS } from '../constants'
 
 class GeminiService {
   constructor() {

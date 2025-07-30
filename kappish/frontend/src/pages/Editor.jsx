@@ -49,17 +49,14 @@ import {
 
 const Editor = () => {
   const { 
-    currentDocument, 
-    updateDocument, 
-    selectDocument, 
+    documents,
+    currentDocument,
+    selectDocument,
+    updateDocument,
     documentData,
     addChatMessage,
     addNote,
-    updateNote,
-    deleteNote,
     addSource,
-    deleteSource,
-    addAIAnalysis,
     updateDocumentSettings
   } = useDocuments()
   const { documentId } = useParams();
@@ -435,29 +432,13 @@ const Editor = () => {
   };
 
   const handleAddNote = async () => {
-    if (!newNote.trim()) return;
+    if (!newNote.trim() || !documentId) return;
     
     try {
       await addNote(documentId, newNote);
       setNewNote('');
     } catch (error) {
       console.error('Error adding note:', error);
-    }
-  };
-
-  const handleUpdateNote = async (noteId, text) => {
-    try {
-      await updateNote(noteId, { content: text });
-    } catch (error) {
-      console.error('Error updating note:', error);
-    }
-  };
-
-  const handleDeleteNote = async (noteId) => {
-    try {
-      await deleteNote(noteId);
-    } catch (error) {
-      console.error('Error deleting note:', error);
     }
   };
 
@@ -563,8 +544,8 @@ const Editor = () => {
 
   // Export function
   const exportToTxt = () => {
-    const content = `${title}\n\n${content}`;
-    const blob = new Blob([content], { type: 'text/plain' });
+    const exportContent = `${title}\n\n${content}`;
+    const blob = new Blob([exportContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
