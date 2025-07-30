@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle, Sun, Moon } from 'lucide-react';
+import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle, Sun, Moon, FileText, Plus } from 'lucide-react';
 import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -163,14 +163,24 @@ const Dashboard = () => {
             <Cake className="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
           </h1>
           
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="btn-secondary p-2"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="btn-secondary p-2"
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            
+            {/* New Document Button */}
+            <button
+              onClick={handleCreateDocument}
+              className="btn-primary whitespace-nowrap"
+            >
+              New Document
+            </button>
+          </div>
         </div>
       </div>
 
@@ -230,113 +240,136 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-
-        <button
-          onClick={handleCreateDocument}
-          className="btn-primary whitespace-nowrap"
-        >
-          New Document
-        </button>
       </div>
 
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredDocuments.map((doc) => (
-          <div
-            key={doc.id}
-            className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:shadow-gray-700/20 cursor-pointer relative"
-            onClick={() => navigate(`/editor/${doc.id}`)}
-          >
-            {/* Action Menu Button */}
-            <div className="absolute top-3 right-3 z-10 action-menu">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowActionMenu(showActionMenu === doc.id ? null : doc.id);
-                }}
-                className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
-              >
-                <MoreVertical size={16} />
-              </button>
+        {filteredDocuments.length > 0 ? (
+          filteredDocuments.map((doc) => (
+            <div
+              key={doc.id}
+              className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:shadow-gray-700/20 cursor-pointer relative"
+              onClick={() => navigate(`/editor/${doc.id}`)}
+            >
+              {/* Action Menu Button */}
+              <div className="absolute top-3 right-3 z-10 action-menu">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowActionMenu(showActionMenu === doc.id ? null : doc.id);
+                  }}
+                  className="p-1 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+                >
+                  <MoreVertical size={16} />
+                </button>
 
-              {/* Action Menu Dropdown */}
-              {showActionMenu === doc.id && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-20 action-menu">
-                  <div className="py-1">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/editor/${doc.id}`);
-                        setShowActionMenu(null);
-                      }}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
-                    >
-                      <Edit size={14} />
-                      <span>Edit</span>
-                    </button>
-                    {doc.status === 'archived' ? (
+                {/* Action Menu Dropdown */}
+                {showActionMenu === doc.id && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-20 action-menu">
+                    <div className="py-1">
                       <button
-                        onClick={(e) => handleRestoreDocument(doc.id, e)}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-blue-400 hover:bg-gray-700 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/editor/${doc.id}`);
+                          setShowActionMenu(null);
+                        }}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors"
                       >
-                        <Archive size={14} />
-                        <span>Restore</span>
+                        <Edit size={14} />
+                        <span>Edit</span>
                       </button>
-                    ) : (
+                      {doc.status === 'archived' ? (
+                        <button
+                          onClick={(e) => handleRestoreDocument(doc.id, e)}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-blue-400 hover:bg-gray-700 transition-colors"
+                        >
+                          <Archive size={14} />
+                          <span>Restore</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => handleArchiveDocument(doc.id, e)}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700 transition-colors"
+                        >
+                          <Archive size={14} />
+                          <span>Archive</span>
+                        </button>
+                      )}
+                      {!doc.aiAnalysis && (
+                        <button
+                          onClick={(e) => handleMarkAsCompleted(doc.id, e)}
+                          className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-green-400 hover:bg-gray-700 transition-colors"
+                        >
+                          <CheckSquare size={14} />
+                          <span>Mark as Completed</span>
+                        </button>
+                      )}
                       <button
-                        onClick={(e) => handleArchiveDocument(doc.id, e)}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-yellow-400 hover:bg-gray-700 transition-colors"
+                        onClick={(e) => handleDeleteDocument(doc.id, e)}
+                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-500/20"
                       >
-                        <Archive size={14} />
-                        <span>Archive</span>
+                        <Trash2 size={14} />
+                        <span>Delete</span>
                       </button>
-                    )}
-                    {!doc.aiAnalysis && (
-                      <button
-                        onClick={(e) => handleMarkAsCompleted(doc.id, e)}
-                        className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-green-400 hover:bg-gray-700 transition-colors"
-                      >
-                        <CheckSquare size={14} />
-                        <span>Mark as Completed</span>
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => handleDeleteDocument(doc.id, e)}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-500/20"
-                    >
-                      <Trash2 size={14} />
-                      <span>Delete</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-100 mb-2">{doc.title}</h3>
-                  <p className="text-gray-400 text-sm line-clamp-2">{stripHtmlTags(doc.content)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-1">
-                    <Clock size={14} />
-                    <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                {doc.aiAnalysis && (
-                  <div className="flex items-center space-x-1 text-green-400">
-                    <CheckCircle size={14} />
-                    <span>Completed</span>
+                    </div>
                   </div>
                 )}
               </div>
+
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-100 mb-2">{doc.title}</h3>
+                    <p className="text-gray-400 text-sm line-clamp-2">{stripHtmlTags(doc.content)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
+                      <Clock size={14} />
+                      <span>{new Date(doc.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  {doc.aiAnalysis && (
+                    <div className="flex items-center space-x-1 text-green-400">
+                      <CheckCircle size={14} />
+                      <span>Completed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          /* Empty State */
+          <div className="col-span-full flex flex-col items-center justify-center py-12">
+            <div className="empty-state">
+              <FileText className="empty-state-icon text-gray-400" />
+              <h3 className="empty-state-title">
+                {searchTerm || activeTab !== 'all' 
+                  ? 'No documents found' 
+                  : 'No documents yet'
+                }
+              </h3>
+              <p className="empty-state-description">
+                {searchTerm || activeTab !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'Create your first document to get started'
+                }
+              </p>
+              {!searchTerm && activeTab === 'all' && (
+                <button
+                  onClick={handleCreateDocument}
+                  className="btn-primary mt-4 flex items-center space-x-2"
+                >
+                  <Plus size={16} />
+                  <span>Create Document</span>
+                </button>
+              )}
             </div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Create Document Modal */}
