@@ -3,9 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
 
-// Debug environment variables
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing')
+// Environment variables validation (removed debug logs for security)
 
 if (!supabaseUrl) {
   throw new Error('REACT_APP_SUPABASE_URL is not defined in environment variables')
@@ -25,6 +23,7 @@ export const documentService = {
       .from('documents')
       .select('*')
       .eq('user_id', userId)
+      .neq('status', 'deleted')
       .order('created_at', { ascending: false })
     
     if (error) throw error

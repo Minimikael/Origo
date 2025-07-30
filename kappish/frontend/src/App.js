@@ -8,6 +8,7 @@ import Sidebar from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
 import Auth from './components/Auth';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -43,36 +44,38 @@ const MainLayout = ({ children }) => (
 
 const App = () => {
   return (
-    <AuthProvider>
-      <DocumentProvider>
-        <AIProvider>
-          <Router>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Dashboard />
-                    </MainLayout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/editor/:documentId?" 
-                element={
-                  <ProtectedRoute>
-                    <Editor />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Router>
-        </AIProvider>
-      </DocumentProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <DocumentProvider>
+          <AIProvider>
+            <Router>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <Dashboard />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/editor/:documentId?" 
+                  element={
+                    <ProtectedRoute>
+                      <Editor />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Router>
+          </AIProvider>
+        </DocumentProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 };
 

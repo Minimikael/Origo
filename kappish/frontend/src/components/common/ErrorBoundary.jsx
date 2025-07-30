@@ -1,6 +1,4 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -9,99 +7,51 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
+    // Update state so the next render will show the fallback UI
     return { hasError: true };
   }
 
   componentDidCatch(error, errorInfo) {
+    // Log error to console for debugging
+    console.error('Error caught by boundary:', error, errorInfo);
+    
+    // Update state with error details
     this.setState({
       error: error,
       errorInfo: errorInfo
     });
-    
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo);
-    }
-    
-    // In production, you might want to send this to an error reporting service
-    // Example: Sentry.captureException(error, { extra: errorInfo });
   }
 
   render() {
     if (this.state.hasError) {
-      return <ErrorFallback error={this.state.error} errorInfo={this.state.errorInfo} />;
+      // You can render any custom fallback UI
+      return (
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-white mb-2">Something went wrong</h2>
+              <p className="text-gray-400 mb-4">
+                We encountered an unexpected error. Please try refreshing the page.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        </div>
+      );
     }
 
     return this.props.children;
   }
 }
-
-const ErrorFallback = ({ error, errorInfo }) => {
-  const navigate = useNavigate();
-
-  const handleRetry = () => {
-    window.location.reload();
-  };
-
-  const handleGoHome = () => {
-    navigate('/');
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-6">
-        <div className="flex items-center justify-center mb-4">
-          <AlertTriangle className="w-12 h-12 text-red-400" />
-        </div>
-        
-        <h2 className="text-xl font-semibold text-gray-200 text-center mb-2">
-          Something went wrong
-        </h2>
-        
-        <p className="text-gray-400 text-center mb-6">
-          We encountered an unexpected error. Please try again or contact support if the problem persists.
-        </p>
-        
-        {process.env.NODE_ENV === 'development' && error && (
-          <details className="mb-4 text-xs">
-            <summary className="text-gray-400 cursor-pointer hover:text-gray-300">
-              Error Details (Development)
-            </summary>
-            <div className="mt-2 p-3 bg-gray-700 rounded text-red-300 font-mono">
-              <div className="mb-2">
-                <strong>Error:</strong>
-                <pre className="whitespace-pre-wrap">{error.toString()}</pre>
-              </div>
-              {errorInfo && (
-                <div>
-                  <strong>Stack Trace:</strong>
-                  <pre className="whitespace-pre-wrap">{errorInfo.componentStack}</pre>
-                </div>
-              )}
-            </div>
-          </details>
-        )}
-        
-        <div className="flex space-x-3">
-          <button
-            onClick={handleRetry}
-            className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span>Retry</span>
-          </button>
-          
-          <button
-            onClick={handleGoHome}
-            className="flex-1 flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            <span>Go Home</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default ErrorBoundary; 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDocuments } from '../context/DocumentContext';
 import { useAI } from '../context/AIContext';
+import { validateAndFormatSource, generateCitation, insertCitationAtCursor } from '../utils/urlValidation';
 import { 
   Home, 
   Save, 
@@ -29,7 +30,6 @@ import {
   Search,
   FileText,
   Target,
-  AlertTriangle,
   CheckCircle,
   Lightbulb,
   Star,
@@ -40,22 +40,41 @@ import {
   Copy,
   ChevronDown as ChevronDownIcon,
   RefreshCw,
-  Bookmark
+  Bookmark,
+  Sun,
+  Moon,
+  Type,
+  Download
 } from 'lucide-react';
 
 const Editor = () => {
-  const { currentDocument, updateDocument } = useDocuments()
+  const { 
+    currentDocument, 
+    updateDocument, 
+    selectDocument, 
+    documentData,
+    addChatMessage,
+    addNote,
+    updateNote,
+    deleteNote,
+    addSource,
+    deleteSource,
+    addAIAnalysis,
+    updateDocumentSettings
+  } = useDocuments()
   const { documentId } = useParams();
   const navigate = useNavigate();
   const { 
     argumentStrength, 
     suggestions = [], 
-    auditSuggestions = [], 
     highlightedText, 
-    handleSuggestionClick, 
     clearHighlight,
     checkPlagiarism,
-    plagiarismResults
+    plagiarismResults,
+    // Gemini-powered functions
+    writingSuggestions,
+    isGenerating,
+    getWritingSuggestions
   } = useAI();
   
   const [content, setContent] = useState('');
@@ -71,7 +90,7 @@ const Editor = () => {
   const [collapsedSections, setCollapsedSections] = useState({
     argumentStrength: false,
     writingAnalysis: false,
-    origoAudit: false,
+    writingSuggestions: false,
     suggestions: false,
     citations: false,
     plagiarism: false
@@ -79,8 +98,16 @@ const Editor = () => {
   
   // Source management state
   const [sources, setSources] = useState([]);
-  const [newSource, setNewSource] = useState({ title: '', url: '' });
+  const [newSource, setNewSource] = useState({ 
+    title: '', 
+    url: '', 
+    author: '', 
+    year: '', 
+    journal: '', 
+    publisher: '' 
+  });
   const [showAddSource, setShowAddSource] = useState(false);
+  const [sourceError, setSourceError] = useState('');
   
   // Research state
   const [researchTopic, setResearchTopic] = useState('');
@@ -92,6 +119,11 @@ const Editor = () => {
   const [selectedCitationStyle, setSelectedCitationStyle] = useState('APA');
   const [showSharePopup, setShowSharePopup] = useState(false);
   
+  // Font and theme state
+  const [selectedFont, setSelectedFont] = useState('sans-serif');
+  const [theme, setTheme] = useState('dark');
+  const [showFontDropdown, setShowFontDropdown] = useState(false);
+  
   const textareaRef = useRef(null);
 
   const handleSave = useCallback(async () => {
@@ -102,23 +134,73 @@ const Editor = () => {
       await updateDocument(documentId, { content, title });
       setTimeout(() => {
         setIsSaving(false);
-        navigate('/'); // Redirect to home page after saving
       }, 1000);
     } catch (error) {
       console.error('Error saving document:', error);
       setIsSaving(false);
     }
-  }, [documentId, content, title, updateDocument, navigate]);
+  }, [documentId, content, title, updateDocument]);
 
+  // Auto-save functionality
+  useEffect(() => {
+    if (!documentId || !content) return;
+    
+    const autoSaveTimer = setTimeout(() => {
+      handleSave();
+    }, 3000); // Auto-save after 3 seconds of inactivity
+    
+    return () => clearTimeout(autoSaveTimer);
+  }, [content, title, documentId, handleSave]);
+
+  // Load document when component mounts
   useEffect(() => {
     if (documentId) {
-      const document = currentDocument;
-      if (document) {
-        setContent(document.content || '');
-        setTitle(document.title || '');
+      selectDocument(documentId);
+    }
+  }, [documentId, selectDocument]);
+
+  // Set content and title when document is loaded
+  useEffect(() => {
+    if (currentDocument) {
+      setContent(currentDocument.content || '');
+      setTitle(currentDocument.title || '');
+    }
+  }, [currentDocument]);
+
+  // Load related data when document data is available
+  useEffect(() => {
+    if (documentData) {
+      // Load chat messages
+      if (documentData.chatMessages) {
+        setChatMessages(documentData.chatMessages.map(msg => ({
+          id: msg.id,
+          text: msg.message,
+          sender: msg.is_user_message ? 'user' : 'ai',
+          timestamp: new Date(msg.created_at)
+        })));
+      }
+
+      // Load notes
+      if (documentData.notes) {
+        setNotes(documentData.notes.map(note => ({
+          id: note.id,
+          text: note.content,
+          timestamp: new Date(note.created_at)
+        })));
+      }
+
+      // Load sources
+      if (documentData.sources) {
+        setSources(documentData.sources.map(source => ({
+          id: source.id,
+          title: source.title,
+          url: source.url,
+          reliability: source.reliability_score,
+          addedAt: new Date(source.created_at)
+        })));
       }
     }
-  }, [documentId, currentDocument]);
+  }, [documentData]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -319,22 +401,16 @@ const Editor = () => {
     setContent(editor.innerHTML);
   };
 
-  const handleChatSubmit = (e) => {
+  const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const newMessage = {
-      id: Date.now(),
-      text: chatInput,
-      sender: 'user',
-      timestamp: new Date()
-    };
+    try {
+      // Save user message to database
+      await addChatMessage(documentId, chatInput, true);
+      setChatInput('');
 
-    setChatMessages(prev => [...prev, newMessage]);
-    setChatInput('');
-
-    // Simulate AI response based on selected model
-    setTimeout(() => {
+      // Generate AI response based on selected model
       let aiResponse = '';
       switch (selectedModel) {
         case 'source':
@@ -351,33 +427,38 @@ const Editor = () => {
           break;
       }
 
-      const aiResponseObj = {
-        id: Date.now() + 1,
-        text: aiResponse,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-      setChatMessages(prev => [...prev, aiResponseObj]);
-    }, 1000);
+      // Save AI response to database
+      await addChatMessage(documentId, aiResponse, false);
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+    }
   };
 
-  const addNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim()) return;
-    const note = {
-      id: Date.now(),
-      text: newNote,
-      timestamp: new Date()
-    };
-    setNotes(prev => [...prev, note]);
-    setNewNote('');
+    
+    try {
+      await addNote(documentId, newNote);
+      setNewNote('');
+    } catch (error) {
+      console.error('Error adding note:', error);
+    }
   };
 
-  const updateNote = (id, text) => {
-    setNotes(prev => prev.map(note => note.id === id ? { ...note, text } : note));
+  const handleUpdateNote = async (noteId, text) => {
+    try {
+      await updateNote(noteId, { content: text });
+    } catch (error) {
+      console.error('Error updating note:', error);
+    }
   };
 
-  const deleteNote = (id) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
+  const handleDeleteNote = async (noteId) => {
+    try {
+      await deleteNote(noteId);
+    } catch (error) {
+      console.error('Error deleting note:', error);
+    }
   };
 
   const toggleSection = (section) => {
@@ -421,18 +502,90 @@ const Editor = () => {
   };
 
   // Source management functions
-  const addSource = () => {
-    if (!newSource.title || !newSource.url) return;
-    const source = {
-      id: Date.now(),
-      ...newSource,
-      reliability: 0.8, // Default reliability
-      addedAt: new Date()
-    };
-    setSources(prev => [...prev, source]);
-    setNewSource({ title: '', url: '' });
-    setShowAddSource(false);
+  const handleAddSource = async () => {
+    if (!newSource.title || !newSource.url) {
+      setSourceError('Title and URL are required');
+      return;
+    }
+    
+    try {
+      // Validate and format the source
+      const validatedSource = validateAndFormatSource(newSource);
+      
+      await addSource(documentId, {
+        ...validatedSource,
+        reliability_score: 0.8
+      });
+      
+      setNewSource({ 
+        title: '', 
+        url: '', 
+        author: '', 
+        year: '', 
+        journal: '', 
+        publisher: '' 
+      });
+      setShowAddSource(false);
+      setSourceError('');
+    } catch (error) {
+      console.error('Error adding source:', error);
+      setSourceError(error.message);
+    }
   };
+
+  const handleCiteSource = (source) => {
+    const citation = generateCitation(source, selectedCitationStyle);
+    insertCitationAtCursor(citation, textareaRef.current);
+  };
+
+  // Font and theme functions
+  const fontOptions = [
+    { name: 'Sans Serif', value: 'sans-serif', class: 'font-sans' },
+    { name: 'Serif', value: 'serif', class: 'font-serif' },
+    { name: 'Mono', value: 'mono', class: 'font-mono' }
+  ];
+
+  const changeFont = (font) => {
+    setSelectedFont(font);
+    // Update document settings
+    if (documentId) {
+      updateDocumentSettings(documentId, { font_style: font });
+    }
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.classList.toggle('light-mode');
+    // Save theme preference
+    localStorage.setItem('theme', newTheme);
+  };
+
+  // Export function
+  const exportToTxt = () => {
+    const content = `${title}\n\n${content}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'document'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showFontDropdown && !event.target.closest('.font-dropdown')) {
+        setShowFontDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showFontDropdown]);
 
   const removeSource = (id) => {
     setSources(prev => prev.filter(source => source.id !== id));
@@ -529,6 +682,15 @@ const Editor = () => {
     return 'text-red-400';
   };
 
+  // Gemini-powered functions
+  const handleGetWritingSuggestions = async () => {
+    if (content && content.length > 50) {
+      await getWritingSuggestions(content);
+    }
+  };
+
+
+
   // Save research source to notes
   const saveResearchToNotes = (source) => {
     const noteContent = `Research Source: ${source.title}\nAuthor: ${source.author}\nYear: ${source.year}\nURL: ${source.url}\nReliability: ${Math.round(source.reliability * 100)}%\n\nSummary: ${source.summary || 'No summary available'}`;
@@ -615,6 +777,44 @@ const Editor = () => {
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Font Selector */}
+          <div className="relative font-dropdown">
+            <button
+              onClick={() => setShowFontDropdown(!showFontDropdown)}
+              className="btn-secondary flex items-center space-x-2"
+            >
+              <Type className="w-4 h-4" />
+              <span>{fontOptions.find(f => f.value === selectedFont)?.name}</span>
+            </button>
+            {showFontDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50">
+                {fontOptions.map((font) => (
+                  <button
+                    key={font.value}
+                    onClick={() => {
+                      changeFont(font.value);
+                      setShowFontDropdown(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left hover:bg-gray-700 transition-colors ${
+                      selectedFont === font.value ? 'bg-blue-600 text-white' : 'text-gray-200'
+                    }`}
+                  >
+                    {font.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="btn-secondary p-2"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           <button 
             onClick={handleSave}
             disabled={isSaving}
@@ -755,21 +955,58 @@ const Editor = () => {
                   {showAddSource && (
                     <div className="mb-4 p-3 bg-gray-700 rounded-lg">
                       <h5 className="text-sm font-medium text-gray-200 mb-2">Add New Source</h5>
+                      {sourceError && (
+                        <div className="mb-2 p-2 bg-red-900 border border-red-700 rounded text-red-200 text-xs">
+                          {sourceError}
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <input
                           type="text"
-                          placeholder="Source title"
+                          placeholder="Source title *"
                           value={newSource.title}
                           onChange={(e) => setNewSource(prev => ({ ...prev, title: e.target.value }))}
                           className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                         />
                         <input
                           type="text"
-                          placeholder="URL"
+                          placeholder="URL *"
                           value={newSource.url}
                           onChange={(e) => setNewSource(prev => ({ ...prev, url: e.target.value }))}
                           className="w-full bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                         />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Author"
+                            value={newSource.author}
+                            onChange={(e) => setNewSource(prev => ({ ...prev, author: e.target.value }))}
+                            className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Year"
+                            value={newSource.year}
+                            onChange={(e) => setNewSource(prev => ({ ...prev, year: e.target.value }))}
+                            className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            placeholder="Journal/Publisher"
+                            value={newSource.journal}
+                            onChange={(e) => setNewSource(prev => ({ ...prev, journal: e.target.value }))}
+                            className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Publisher"
+                            value={newSource.publisher}
+                            onChange={(e) => setNewSource(prev => ({ ...prev, publisher: e.target.value }))}
+                            className="bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
+                          />
+                        </div>
                         <div className="flex items-center space-x-2">
                           <select
                             value={selectedCitationStyle}
@@ -783,11 +1020,22 @@ const Editor = () => {
                           <span className="text-xs text-gray-400">Citation Style</span>
                         </div>
                         <div className="flex space-x-2">
-                          <button onClick={addSource} className="btn-primary px-3 py-2">
+                          <button onClick={handleAddSource} className="btn-primary px-3 py-2">
                             Add Source
                           </button>
                           <button 
-                            onClick={() => setShowAddSource(false)}
+                            onClick={() => {
+                              setShowAddSource(false);
+                              setSourceError('');
+                              setNewSource({ 
+                                title: '', 
+                                url: '', 
+                                author: '', 
+                                year: '', 
+                                journal: '', 
+                                publisher: '' 
+                              });
+                            }}
                             className="btn-secondary px-3 py-2"
                           >
                             Cancel
@@ -821,15 +1069,16 @@ const Editor = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => addCitation(source)}
+                              onClick={() => handleCiteSource(source)}
                               className="text-blue-400 hover:text-blue-300 text-xs"
-                              title="Add Citation"
+                              title="Insert Citation"
                             >
                               <Copy className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => removeSource(source.id)}
                               className="text-red-400 hover:text-red-300 text-xs"
+                              title="Remove Source"
                             >
                               Remove
                             </button>
@@ -969,7 +1218,7 @@ const Editor = () => {
                       placeholder="Add a note..."
                       className="flex-1 bg-gray-600 border border-gray-500 rounded px-3 py-2 text-gray-200 placeholder-gray-400"
                     />
-                    <button onClick={addNote} className="btn-primary">
+                    <button onClick={handleAddNote} className="btn-primary">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
@@ -1191,7 +1440,10 @@ const Editor = () => {
                 onInput={handleContentChange}
                 onBlur={(e) => setContent(e.target.innerHTML)}
                 placeholder="Start writing your document..."
-                className="w-full flex-1 bg-gray-900 border border-gray-700 rounded-b-lg p-6 text-gray-200 placeholder-gray-500 resize-none outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto"
+                className={`w-full flex-1 bg-gray-900 border border-gray-700 rounded-b-lg p-6 text-gray-200 placeholder-gray-500 resize-none outline-none focus:ring-2 focus:ring-blue-500 overflow-y-auto ${
+                  selectedFont === 'serif' ? 'font-serif' : 
+                  selectedFont === 'mono' ? 'font-mono' : 'font-sans'
+                }`}
                 style={{ minHeight: '0' }}
               />
             </div>
@@ -1330,44 +1582,61 @@ const Editor = () => {
                 )}
               </div>
 
-              {/* Origo Audit Panel */}
+              {/* Writing Suggestions */}
               <div className="mb-4">
                 <button
-                  onClick={() => toggleSection('origoAudit')}
+                  onClick={() => toggleSection('writingSuggestions')}
                   className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-gray-200">Origo Audit</span>
+                    <Lightbulb className="w-4 h-4 text-white" />
+                    <span className="text-sm font-semibold text-gray-200">Writing Suggestions</span>
+                    {content && content.length > 50 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGetWritingSuggestions();
+                        }}
+                        className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                      >
+                        {isGenerating ? 'Generating...' : 'Refresh'}
+                      </button>
+                    )}
                   </div>
-                  {collapsedSections.origoAudit ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
+                  {collapsedSections.writingSuggestions ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                 </button>
                 
-                {!collapsedSections.origoAudit && (
-                  <div className="mt-2 space-y-2">
-                    {(auditSuggestions || []).length > 0 ? (
-                      (auditSuggestions || []).map(suggestion => (
-                        <button
-                          key={suggestion.id}
-                          onClick={() => handleSuggestionClick(suggestion)}
-                          className="w-full text-left p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                        >
-                          <div className="flex items-start space-x-2">
-                            <div className={`w-2 h-2 rounded-full mt-2 ${
-                              suggestion.type === 'critical' ? 'bg-red-400' : 'bg-yellow-400'
-                            }`}></div>
-                            <div className="flex-1">
-                              <h5 className="text-sm font-medium text-gray-200">{suggestion.title}</h5>
-                              <p className="text-xs text-gray-400 mt-1">{suggestion.message}</p>
+                {!collapsedSections.writingSuggestions && (
+                  <div className="mt-2 p-3 bg-gray-700 rounded-lg">
+                    {isGenerating ? (
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                        <p className="text-sm text-gray-400">Generating writing suggestions...</p>
+                      </div>
+                    ) : writingSuggestions && writingSuggestions.length > 0 ? (
+                      <div className="space-y-3">
+                        {writingSuggestions.map((suggestion, index) => (
+                          <div key={index} className="suggestion-item">
+                            <div className="flex items-start space-x-2">
+                              <div className="w-2 h-2 rounded-full mt-1.5 bg-blue-400"></div>
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-300">{suggestion}</p>
+                              </div>
                             </div>
                           </div>
-                        </button>
-                      ))
+                        ))}
+                      </div>
+                    ) : content && content.length > 50 ? (
+                      <div className="text-center">
+                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">Click "Refresh" to get AI-powered writing suggestions</p>
+                        <p className="text-xs text-gray-500">Analyzing your content for improvement opportunities</p>
+                      </div>
                     ) : (
-                      <div className="p-4 bg-gray-700 rounded-lg text-center">
-                        <AlertTriangle className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">No audit issues found</p>
-                        <p className="text-xs text-gray-500">Your document appears to be in good shape!</p>
+                      <div className="text-center">
+                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                        <p className="text-sm text-gray-400 mb-1">No writing suggestions yet</p>
+                        <p className="text-xs text-gray-500">Write more content (50+ characters) to get AI-powered writing suggestions</p>
                       </div>
                     )}
                   </div>
@@ -1382,7 +1651,7 @@ const Editor = () => {
                 >
                   <div className="flex items-center space-x-2">
                     <Lightbulb className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-gray-200">Writing Suggestions</span>
+                    <span className="text-sm font-semibold text-gray-200">AI Suggestions</span>
                   </div>
                   {collapsedSections.suggestions ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                 </button>
@@ -1398,7 +1667,7 @@ const Editor = () => {
                     ) : (
                       <div className="p-4 bg-gray-700 rounded-lg text-center">
                         <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">No writing suggestions yet</p>
+                        <p className="text-sm text-gray-400 mb-1">No AI suggestions yet</p>
                         <p className="text-xs text-gray-500">Start writing to get AI-powered suggestions</p>
                       </div>
                     )}
@@ -1531,6 +1800,18 @@ const Editor = () => {
                   <option value="private">Private - Only you can access</option>
                   <option value="restricted">Restricted - Only invited users can access</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Export Options</label>
+                <div className="space-y-2">
+                  <button
+                    onClick={exportToTxt}
+                    className="w-full btn-secondary flex items-center justify-center space-x-2 px-3 py-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Export as TXT</span>
+                  </button>
+                </div>
               </div>
               <div className="flex justify-end space-x-2">
                 <button

@@ -114,6 +114,19 @@ export const DocumentProvider = ({ children }) => {
     }
   }
 
+  const markAsCompleted = async (documentId) => {
+    try {
+      // Add a completion analysis to mark the document as completed
+      await addAIAnalysis(documentId, 'completion', { status: 'completed' }, 100, ['Document marked as completed'])
+      setDocuments(prev => 
+        prev.map(doc => doc.id === documentId ? { ...doc, aiAnalysis: true } : doc)
+      )
+    } catch (error) {
+      console.error('Error marking document as completed:', error)
+      throw error
+    }
+  }
+
   const selectDocument = async (documentId) => {
     try {
       const fullData = await documentService.getDocumentWithData(documentId)
@@ -395,6 +408,7 @@ export const DocumentProvider = ({ children }) => {
     deleteDocument,
     archiveDocument,
     restoreDocument,
+    markAsCompleted,
     selectDocument,
     loadDocuments,
     

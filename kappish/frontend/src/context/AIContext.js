@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useDocuments } from './DocumentContext';
+import { geminiService } from '../services/geminiService';
 
 const AIContext = createContext();
 
@@ -31,6 +32,9 @@ export const AIProvider = ({ children }) => {
   const [auditSuggestions, setAuditSuggestions] = useState([]);
   const [highlightedText, setHighlightedText] = useState(null);
   const [plagiarismResults, setPlagiarismResults] = useState(null);
+  const [writingSuggestions, setWritingSuggestions] = useState([]);
+  const [contentAnalysis, setContentAnalysis] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Generate citation in different formats
   const generateCitation = (source, style = 'APA') => {
@@ -276,9 +280,87 @@ export const AIProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [currentDocument?.content]);
 
-  // TODO: Implement AI content analysis functionality
-  // TODO: Implement source suggestions functionality  
-  // TODO: Implement fact checking functionality
+  // Gemini-powered AI functions
+  const getWritingSuggestions = async (content) => {
+    if (!content || content.length < 50) {
+      setWritingSuggestions([]);
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const suggestions = await geminiService.getWritingSuggestions(content, currentDocument?.id);
+      setWritingSuggestions(suggestions);
+    } catch (error) {
+      console.error('Error getting writing suggestions:', error);
+      setWritingSuggestions([]);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const analyzeContent = async (content) => {
+    if (!content || content.length < 20) {
+      setContentAnalysis(null);
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const analysis = await geminiService.analyzeContent(content, currentDocument?.id);
+      setContentAnalysis(analysis);
+    } catch (error) {
+      console.error('Error analyzing content:', error);
+      setContentAnalysis(null);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const continueContent = async (content) => {
+    if (!content) return '';
+
+    setIsGenerating(true);
+    try {
+      const continuation = await geminiService.continueContent(content, currentDocument?.id);
+      return continuation;
+    } catch (error) {
+      console.error('Error continuing content:', error);
+      return '';
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const improveWriting = async (content) => {
+    if (!content || content.length < 50) return content;
+
+    setIsGenerating(true);
+    try {
+      const improved = await geminiService.improveWriting(content, currentDocument?.id);
+      return improved;
+    } catch (error) {
+      console.error('Error improving writing:', error);
+      return content;
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const generateTitles = async (content) => {
+    if (!content || content.length < 20) return [];
+
+    setIsGenerating(true);
+    try {
+      const titles = await geminiService.generateTitles(content, currentDocument?.id);
+      return titles;
+    } catch (error) {
+      console.error('Error generating titles:', error);
+      return [];
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const value = {
     aiAnalysis,
@@ -289,7 +371,16 @@ export const AIProvider = ({ children }) => {
     clearHighlight,
     generateCitation,
     checkPlagiarism,
-    plagiarismResults
+    plagiarismResults,
+    // Gemini-powered functions
+    writingSuggestions,
+    contentAnalysis,
+    isGenerating,
+    getWritingSuggestions,
+    analyzeContent,
+    continueContent,
+    improveWriting,
+    generateTitles
   };
 
   return (
