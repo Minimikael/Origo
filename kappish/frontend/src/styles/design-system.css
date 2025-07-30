@@ -112,6 +112,18 @@
   --color-dark-800: #b1b1b1;
   --color-dark-900: #c4c4c4;
 
+  /* Light Theme Colors */
+  --color-light-50: #f1f1f1;
+  --color-light-100: #ffffff;
+  --color-light-200: #f8f9fa;
+  --color-light-300: #e9ecef;
+  --color-light-400: #dee2e6;
+  --color-light-500: #ced4da;
+  --color-light-600: #adb5bd;
+  --color-light-700: #6c757d;
+  --color-light-800: #495057;
+  --color-light-900: #212529;
+
   /* Semantic Color Assignments */
   --color-primary: var(--color-primary-500);
   --color-primary-hover: var(--color-primary-600);
@@ -133,24 +145,24 @@
   --color-error: var(--color-error-500);
   --color-info: var(--color-info-500);
 
-  /* Background Colors */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: var(--color-gray-50);
-  --color-bg-tertiary: var(--color-gray-100);
+  /* Dark Theme Defaults */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #404040;
   --color-bg-dark: var(--color-dark-100);
   --color-bg-dark-secondary: var(--color-dark-200);
 
-  /* Text Colors */
-  --color-text-primary: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-700);
-  --color-text-tertiary: var(--color-gray-500);
-  --color-text-inverse: #ffffff;
+  /* Text Colors - Dark Theme */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #e5e7eb;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #1a1a1a;
   --color-text-dark: var(--color-dark-900);
 
-  /* Border Colors */
-  --color-border-primary: var(--color-gray-200);
-  --color-border-secondary: var(--color-gray-300);
-  --color-border-dark: var(--color-dark-300);
+  /* Border Colors - Dark Theme */
+  --color-border-primary: #404040;
+  --color-border-secondary: #525252;
+  --color-border-dark: var(--color-light-300);
 
   /* Shadow Colors */
   --color-shadow-light: rgba(0, 0, 0, 0.05);
@@ -167,6 +179,29 @@
   /* Backdrop Blur */
   --backdrop-blur: blur(10px);
   --backdrop-blur-heavy: blur(20px);
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] {
+  --color-bg-primary: #f1f1f1;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f8f9fa;
+  --color-bg-dark: var(--color-light-100);
+  --color-bg-dark-secondary: var(--color-light-200);
+  
+  --color-text-primary: #212529;
+  --color-text-secondary: #495057;
+  --color-text-tertiary: #6c757d;
+  --color-text-inverse: #ffffff;
+  --color-text-dark: var(--color-light-900);
+  
+  --color-border-primary: #dee2e6;
+  --color-border-secondary: #ced4da;
+  --color-border-dark: var(--color-light-300);
+  
+  --color-shadow-light: rgba(0, 0, 0, 0.05);
+  --color-shadow-medium: rgba(0, 0, 0, 0.1);
+  --color-shadow-heavy: rgba(0, 0, 0, 0.2);
 }
 
 /* Dark Theme Overrides */

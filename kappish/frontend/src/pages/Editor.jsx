@@ -115,7 +115,9 @@ const Editor = () => {
   
   // Font and theme state
   const [selectedFont, setSelectedFont] = useState('sans-serif');
+  const [selectedWidth, setSelectedWidth] = useState('regular');
   const [theme, setTheme] = useState('dark');
+  const [showPageStyleDropdown, setShowPageStyleDropdown] = useState(false);
   const [showFontDropdown, setShowFontDropdown] = useState(false);
   
   const textareaRef = useRef(null);
@@ -145,6 +147,13 @@ const Editor = () => {
     
     return () => clearTimeout(autoSaveTimer);
   }, [content, title, documentId, handleSave]);
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
 
   // Load document when component mounts
   useEffect(() => {
@@ -523,6 +532,12 @@ const Editor = () => {
     { name: 'Mono', value: 'mono', class: 'font-mono' }
   ];
 
+  const pageStyleOptions = [
+    { name: 'Regular', value: 'regular' },
+    { name: 'Wide', value: 'wide' },
+    { name: 'Narrow', value: 'narrow' }
+  ];
+
   const changeFont = (font) => {
     setSelectedFont(font);
     // Update document settings
@@ -531,10 +546,21 @@ const Editor = () => {
     }
   };
 
+  const changePageStyle = (style) => {
+    setSelectedWidth(style);
+    // Update document settings
+    if (documentId) {
+      updateDocumentSettings(documentId, { page_width: style });
+    }
+  };
+
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    document.documentElement.classList.toggle('light-mode');
+    
+    // Apply theme to document element
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
     // Save theme preference
     localStorage.setItem('theme', newTheme);
   };
@@ -557,13 +583,16 @@ const Editor = () => {
       if (showFontDropdown && !event.target.closest('.font-dropdown')) {
         setShowFontDropdown(false);
       }
+      if (showPageStyleDropdown && !event.target.closest('.page-style-dropdown')) {
+        setShowPageStyleDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showFontDropdown]);
+  }, [showFontDropdown, showPageStyleDropdown]);
 
   const removeSource = (id) => {
     setSources(prev => prev.filter(source => source.id !== id));
@@ -742,6 +771,15 @@ const Editor = () => {
             <Home className="w-4 h-4" />
             <span>Home</span>
           </button>
+          
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="btn-secondary p-2"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
 
         <div className="flex-1 mx-8">
@@ -755,44 +793,6 @@ const Editor = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Font Selector */}
-          <div className="relative font-dropdown">
-            <button
-              onClick={() => setShowFontDropdown(!showFontDropdown)}
-              className="btn-secondary flex items-center space-x-2"
-            >
-              <Type className="w-4 h-4" />
-              <span>{fontOptions.find(f => f.value === selectedFont)?.name}</span>
-            </button>
-            {showFontDropdown && (
-              <div className="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50">
-                {fontOptions.map((font) => (
-                  <button
-                    key={font.value}
-                    onClick={() => {
-                      changeFont(font.value);
-                      setShowFontDropdown(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left hover:bg-gray-700 transition-colors ${
-                      selectedFont === font.value ? 'bg-blue-600 text-white' : 'text-gray-200'
-                    }`}
-                  >
-                    {font.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="btn-secondary p-2"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
           <button 
             onClick={handleSave}
             disabled={isSaving}
@@ -1279,7 +1279,11 @@ const Editor = () => {
         {/* Center Document Editor */}
         <div className="flex-1 flex flex-col bg-gray-800">
           <div className="flex-1 p-8">
-            <div className="max-w-4xl mx-auto relative h-full flex flex-col">
+            <div className={`mx-auto relative h-full flex flex-col ${
+              selectedWidth === 'wide' ? 'max-w-6xl' : 
+              selectedWidth === 'narrow' ? 'max-w-2xl' : 
+              'max-w-4xl'
+            }`}>
               {highlightedText && (
                 <div className="absolute top-0 right-0 z-10">
                   <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg max-w-sm">
@@ -1409,6 +1413,38 @@ const Editor = () => {
                   >
                     <AlignRight className="w-4 h-4" />
                   </button>
+                  
+                  <div className="w-px h-6 bg-gray-500 mx-2"></div>
+                  
+                  {/* Page Style Dropdown */}
+                  <div className="relative page-style-dropdown">
+                    <button
+                      onClick={() => setShowPageStyleDropdown(!showPageStyleDropdown)}
+                      className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
+                      title="Page Style"
+                    >
+                      <Type className="w-4 h-4" />
+                      <span className="text-xs">{pageStyleOptions.find(s => s.value === selectedWidth)?.name}</span>
+                    </button>
+                    {showPageStyleDropdown && (
+                      <div className="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 min-w-32">
+                        {pageStyleOptions.map((style) => (
+                          <button
+                            key={style.value}
+                            onClick={() => {
+                              changePageStyle(style.value);
+                              setShowPageStyleDropdown(false);
+                            }}
+                            className={`w-full px-3 py-2 text-left hover:bg-gray-700 transition-colors text-sm ${
+                              selectedWidth === style.value ? 'bg-blue-600 text-white' : 'text-gray-200'
+                            }`}
+                          >
+                            {style.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
