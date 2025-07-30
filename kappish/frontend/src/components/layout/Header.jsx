@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, HelpCircle, Bell } from 'lucide-react';
 
 const Header = () => {
   const { user, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showBellModal, setShowBellModal] = useState(false);
+  const [selectedHelpTopic, setSelectedHelpTopic] = useState('');
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -46,6 +50,55 @@ const Header = () => {
     }
   };
 
+  const helpTopics = [
+    {
+      id: 'getting-started',
+      title: 'Getting Started',
+      description: 'Learn the basics of using Origo for your writing projects.'
+    },
+    {
+      id: 'document-editing',
+      title: 'Document Editing',
+      description: 'Master the rich text editor and formatting options.'
+    },
+    {
+      id: 'sources-citations',
+      title: 'Sources & Citations',
+      description: 'How to add sources, manage citations, and use the research assistant.'
+    },
+    {
+      id: 'ai-assistants',
+      title: 'AI Assistants',
+      description: 'Understanding the different AI assistants and how to use them effectively.'
+    },
+    {
+      id: 'exporting-sharing',
+      title: 'Exporting & Sharing',
+      description: 'Learn how to export your documents and share them with others.'
+    },
+    {
+      id: 'troubleshooting',
+      title: 'Troubleshooting',
+      description: 'Common issues and how to resolve them.'
+    }
+  ];
+
+  const getHelpContent = (topicId) => {
+    const topic = helpTopics.find(t => t.id === topicId);
+    if (!topic) return null;
+    
+    const content = {
+      'getting-started': 'Welcome to Origo! Start by creating a new document using the "New Document" button. You can then begin writing and use the various AI assistants to enhance your work.',
+      'document-editing': 'Use the rich text editor to format your content. You can apply bold, italic, underline, and other formatting options using the toolbar. The page style dropdown allows you to adjust the width of your editor.',
+      'sources-citations': 'Add sources by clicking the "Add Source" button in the source assistant. The research assistant can help you find relevant sources online. Citations can be automatically generated in various styles.',
+      'ai-assistants': 'Origo includes several AI assistants: Source Assistant for managing references, Research Assistant for finding sources, Notes Assistant for comments, and Writing Assistant for content suggestions.',
+      'exporting-sharing': 'Export your documents as TXT files using the share button. More export formats will be available soon.',
+      'troubleshooting': 'If you encounter issues, try refreshing the page or clearing your browser cache. For persistent problems, check your internet connection and ensure you\'re using a supported browser.'
+    };
+    
+    return content[topicId] || 'Content not available for this topic.';
+  };
+
   return (
     <header className="bg-gray-900 border-b border-gray-700 px-4 py-3">
       <div className="flex items-center justify-between">
@@ -63,64 +116,178 @@ const Header = () => {
           </svg>
         </div>
 
-        {/* Profile Dropdown */}
-        <div className="relative" ref={dropdownRef}>
+        {/* Navigation Buttons */}
+        <div className="flex items-center space-x-2">
+          {/* Help Button */}
           <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            onClick={() => setShowHelpModal(true)}
+            className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            title="Help"
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                {getUserDisplayName().charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span className="text-sm font-medium">{getUserDisplayName()}</span>
-            <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            <HelpCircle size={20} />
           </button>
 
-          {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-68 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-50">
-              <div className="py-2">
-                {/* User Info */}
-                <div className="px-4 py-3 border-b border-gray-700">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {getUserDisplayName().charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-100">{getUserDisplayName()}</p>
-                      <p className="text-xs text-gray-400">{user?.email}</p>
+          {/* Bell Button */}
+          <button
+            onClick={() => setShowBellModal(true)}
+            className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            title="Notifications"
+          >
+            <Bell size={20} />
+          </button>
+
+          {/* Settings Button */}
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            title="Settings"
+          >
+            <Settings size={20} />
+          </button>
+
+          {/* Profile Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {getUserDisplayName().charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span className="text-sm font-medium">{getUserDisplayName()}</span>
+              <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-68 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-50">
+                <div className="py-2">
+                  {/* User Info */}
+                  <div className="px-4 py-3 border-b border-gray-700">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {getUserDisplayName().charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-100">{getUserDisplayName()}</p>
+                        <p className="text-xs text-gray-400">{user?.email}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Menu Items */}
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      setIsDropdownOpen(false);
-                      // Add settings functionality here if needed
-                    }}
-                    className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                  >
-                    <Settings size={16} />
-                    <span>Settings</span>
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                  >
-                    <LogOut size={16} />
-                    <span>Sign Out</span>
-                  </button>
+                  {/* Menu Items */}
+                  <div className="py-1">
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                    >
+                      <LogOut size={16} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Help Center</h2>
+              <button
+                onClick={() => {
+                  setShowHelpModal(false);
+                  setSelectedHelpTopic('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {helpTopics.map(topic => (
+                <button
+                  key={topic.id}
+                  onClick={() => setSelectedHelpTopic(topic.id)}
+                  className={`p-4 rounded-lg border text-left transition-colors ${
+                    selectedHelpTopic === topic.id
+                      ? 'border-blue-500 bg-blue-500 bg-opacity-10'
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                >
+                  <h3 className="font-medium text-white mb-1">{topic.title}</h3>
+                  <p className="text-sm text-gray-400">{topic.description}</p>
+                </button>
+              ))}
+            </div>
+            
+            {selectedHelpTopic && (
+              <div className="bg-gray-700 rounded-lg p-4">
+                <h3 className="font-medium text-white mb-2">
+                  {helpTopics.find(t => t.id === selectedHelpTopic)?.title}
+                </h3>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {getHelpContent(selectedHelpTopic)}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bell Modal */}
+      {showBellModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Notifications</h2>
+              <button
+                onClick={() => setShowBellModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="text-center py-8">
+              <Bell className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400">No notifications yet</p>
+              <p className="text-sm text-gray-500 mt-2">We'll notify you about important updates</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Settings</h2>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="text-center py-8">
+              <Settings className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-400">Settings coming soon</p>
+              <p className="text-sm text-gray-500 mt-2">Customize your Origo experience</p>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

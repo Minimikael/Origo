@@ -186,22 +186,29 @@
   --color-bg-primary: #f1f1f1;
   --color-bg-secondary: #ffffff;
   --color-bg-tertiary: #f8f9fa;
-  --color-bg-dark: var(--color-light-100);
-  --color-bg-dark-secondary: var(--color-light-200);
+  --color-bg-dark: #ffffff;
+  --color-bg-dark-secondary: #f8f9fa;
   
   --color-text-primary: #212529;
   --color-text-secondary: #495057;
   --color-text-tertiary: #6c757d;
   --color-text-inverse: #ffffff;
-  --color-text-dark: var(--color-light-900);
+  --color-text-dark: #212529;
   
   --color-border-primary: #dee2e6;
   --color-border-secondary: #ced4da;
-  --color-border-dark: var(--color-light-300);
+  --color-border-dark: #dee2e6;
   
   --color-shadow-light: rgba(0, 0, 0, 0.05);
   --color-shadow-medium: rgba(0, 0, 0, 0.1);
   --color-shadow-heavy: rgba(0, 0, 0, 0.2);
+  
+  /* Button colors for light mode */
+  --btn-primary-bg: var(--color-primary-500);
+  --btn-primary-hover: var(--color-primary-600);
+  --btn-secondary-bg: var(--color-gray-200);
+  --btn-secondary-hover: var(--color-gray-300);
+  --btn-secondary-text: var(--color-gray-700);
 }
 
 /* Dark Theme Overrides */
@@ -537,7 +544,7 @@
 
 /* Primary Button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-600) 100%);
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
   color: var(--color-text-inverse);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
@@ -578,8 +585,8 @@
 
 /* Secondary Button */
 .btn-secondary {
-  background-color: transparent;
-  color: var(--color-text-inverse);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -590,7 +597,7 @@
 }
 
 .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.2),
@@ -600,7 +607,7 @@
 }
 
 .btn-secondary:active {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(0);
   box-shadow: 
@@ -613,6 +620,31 @@
   border-color: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.4);
   box-shadow: none;
+}
+
+/* Light mode button overrides */
+[data-theme="light"] .btn-secondary {
+  background-color: var(--color-gray-200);
+  color: var(--color-gray-700);
+  border: 1px solid var(--color-gray-300);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background-color: var(--color-gray-300);
+  border-color: var(--color-gray-400);
+  box-shadow: 
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .btn-secondary:active {
+  background-color: var(--color-gray-400);
+  border-color: var(--color-gray-500);
+  transform: translateY(0);
+  box-shadow: 
+    0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Tertiary Button */

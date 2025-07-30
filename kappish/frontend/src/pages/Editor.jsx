@@ -28,7 +28,6 @@ import {
   BookOpen,
   Search,
   FileText,
-  Target,
   CheckCircle,
   Lightbulb,
   Star,
@@ -42,7 +41,7 @@ import {
   Bookmark,
   Sun,
   Moon,
-  Type,
+  Maximize2,
   Download,
   Home
 } from 'lucide-react';
@@ -171,10 +170,10 @@ const Editor = () => {
 
   // Load related data when document data is available
   useEffect(() => {
-    if (documentData) {
+    if (currentDocument) {
       // Load chat messages
-      if (documentData.chatMessages) {
-        setChatMessages(documentData.chatMessages.map(msg => ({
+      if (currentDocument.chatMessages) {
+        setChatMessages(currentDocument.chatMessages.map(msg => ({
           id: msg.id,
           text: msg.message,
           sender: msg.is_user_message ? 'user' : 'ai',
@@ -183,8 +182,8 @@ const Editor = () => {
       }
 
       // Load notes
-      if (documentData.notes) {
-        setNotes(documentData.notes.map(note => ({
+      if (currentDocument.notes) {
+        setNotes(currentDocument.notes.map(note => ({
           id: note.id,
           text: note.content,
           timestamp: new Date(note.created_at)
@@ -192,8 +191,8 @@ const Editor = () => {
       }
 
       // Load sources
-      if (documentData.sources) {
-        setSources(documentData.sources.map(source => ({
+      if (currentDocument.sources) {
+        setSources(currentDocument.sources.map(source => ({
           id: source.id,
           title: source.title,
           url: source.url,
@@ -202,7 +201,7 @@ const Editor = () => {
         })));
       }
     }
-  }, [documentData]);
+  }, [currentDocument]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -525,25 +524,11 @@ const Editor = () => {
   };
 
   // Font and theme functions
-  const fontOptions = [
-    { name: 'Sans Serif', value: 'sans-serif', class: 'font-sans' },
-    { name: 'Serif', value: 'serif', class: 'font-serif' },
-    { name: 'Mono', value: 'mono', class: 'font-mono' }
-  ];
-
   const pageStyleOptions = [
     { name: 'Regular', value: 'regular' },
     { name: 'Wide', value: 'wide' },
     { name: 'Narrow', value: 'narrow' }
   ];
-
-  const changeFont = (font) => {
-    setSelectedFont(font);
-    // Update document settings
-    if (documentId) {
-      updateDocumentSettings(documentId, { font_style: font });
-    }
-  };
 
   const changePageStyle = (style) => {
     setSelectedWidth(style);
@@ -1157,11 +1142,10 @@ const Editor = () => {
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => saveResearchToNotes(source)}
-                                  className="text-green-400 hover:text-green-300 text-sm px-2 py-1 rounded bg-green-400 bg-opacity-10 hover:bg-opacity-20 transition-colors"
+                                  className="text-green-400 hover:text-green-300 p-2 rounded bg-green-400 bg-opacity-10 hover:bg-opacity-20 transition-colors"
                                   title="Save to Notes"
                                 >
-                                  <Bookmark className="w-4 h-4 mr-1" />
-                                  Save
+                                  <Bookmark className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
@@ -1422,7 +1406,7 @@ const Editor = () => {
                       className="p-2 rounded hover:bg-gray-600 text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
                       title="Page Style"
                     >
-                      <Type className="w-4 h-4" />
+                      <Maximize2 className="w-4 h-4" />
                       <span className="text-xs">{pageStyleOptions.find(s => s.value === selectedWidth)?.name}</span>
                     </button>
                     {showPageStyleDropdown && (
@@ -1476,7 +1460,7 @@ const Editor = () => {
                   className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center hover:scale-110 transition-transform"
                   title="Origo Analysis"
                 >
-                  <Target className="w-4 h-4 text-white" />
+                  <CheckCircle className="w-4 h-4 text-white" />
                 </button>
               </div>
             )}
@@ -1492,31 +1476,7 @@ const Editor = () => {
 
           {!rightPanelCollapsed && (
             <div className="flex-1 p-4 overflow-y-auto bg-gray-800">
-              {/* Argument Strength */}
-              <div className="mb-4">
-                <button
-                  onClick={() => toggleSection('argumentStrength')}
-                  className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Target className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-gray-200">Argument Strength</span>
-                  </div>
-                  {collapsedSections.argumentStrength ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
-                </button>
-                
-                {!collapsedSections.argumentStrength && (
-                  <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                    {/* argumentStrength is no longer available from useAI */}
-                    {/* This section will need to be re-evaluated or removed if argumentStrength is no longer tracked */}
-                    <div className="text-center">
-                      <Target className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400 mb-1">No argument analysis yet</p>
-                      <p className="text-xs text-gray-500">Write more content to analyze your argument strength</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+
 
               {/* Writing Analysis */}
               <div className="mb-4">
@@ -1638,31 +1598,7 @@ const Editor = () => {
                 )}
               </div>
 
-              {/* AI Suggestions */}
-              <div className="mb-4">
-                <button
-                  onClick={() => toggleSection('suggestions')}
-                  className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Lightbulb className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-gray-200">AI Suggestions</span>
-                  </div>
-                  {collapsedSections.suggestions ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
-                </button>
-                
-                {!collapsedSections.suggestions && (
-                  <div className="mt-2 space-y-2">
-                    {/* suggestions is no longer available from useAI */}
-                    {/* This section will need to be re-evaluated or removed if suggestions are no longer tracked */}
-                    <div className="p-4 bg-gray-700 rounded-lg text-center">
-                      <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                      <p className="text-sm text-gray-400 mb-1">No AI suggestions yet</p>
-                      <p className="text-xs text-gray-500">Start writing to get AI-powered suggestions</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+
 
 
 
