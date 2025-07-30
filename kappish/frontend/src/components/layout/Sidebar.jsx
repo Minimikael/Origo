@@ -8,7 +8,6 @@ import {
   CreditCard,
   HelpCircle
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
 import { useDocuments } from '../../context/DocumentContext'
 import Button from '../ui/Button'
 
