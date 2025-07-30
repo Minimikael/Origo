@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle } from 'lucide-react';
+import { Clock, CheckSquare, Cake, MoreVertical, Edit, Archive, Trash2, CheckCircle, Sun, Moon } from 'lucide-react';
 import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,6 +16,25 @@ const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newDocumentTitle, setNewDocumentTitle] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [theme, setTheme] = useState('dark');
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    
+    // Apply theme to document element
+    document.documentElement.setAttribute('data-theme', newTheme);
+    
+    // Save theme preference
+    localStorage.setItem('theme', newTheme);
+  };
 
   // Close action menu when clicking outside
   useEffect(() => {
@@ -138,10 +157,21 @@ const Dashboard = () => {
     <div className="flex-1 p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-100 mb-2 flex items-center space-x-2">
-          <span>Let's be creative, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>
-          <Cake className="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-100 mb-2 flex items-center space-x-2">
+            <span>Let's be creative, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}</span>
+            <Cake className="w-6 h-6 text-blue-400 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+          </h1>
+          
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="btn-secondary p-2"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters */}
