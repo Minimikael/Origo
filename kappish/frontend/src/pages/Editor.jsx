@@ -29,7 +29,6 @@ import {
   Search,
   FileText,
   CheckCircle,
-  Lightbulb,
   Star,
   ExternalLink,
   PlusCircle,
@@ -64,11 +63,7 @@ const Editor = () => {
     highlightedText, 
     clearHighlight,
     checkPlagiarism,
-    plagiarismResults,
-    // Gemini-powered functions
-    writingSuggestions,
-    isGenerating,
-    getWritingSuggestions
+    plagiarismResults
   } = useAI();
   
   const [content, setContent] = useState('');
@@ -83,7 +78,6 @@ const Editor = () => {
   const [newNote, setNewNote] = useState('');
   const [collapsedSections, setCollapsedSections] = useState({
     writingAnalysis: false,
-    writingSuggestions: false,
     citations: false,
     plagiarism: false
   });
@@ -112,7 +106,7 @@ const Editor = () => {
   const [showSharePopup, setShowSharePopup] = useState(false);
   
   // Font and theme state
-  const [selectedFont, setSelectedFont] = useState('sans-serif');
+  const [selectedFont] = useState('sans-serif');
   const [selectedWidth, setSelectedWidth] = useState('regular');
   const [theme, setTheme] = useState('dark');
   const [showPageStyleDropdown, setShowPageStyleDropdown] = useState(false);
@@ -674,11 +668,7 @@ const Editor = () => {
   };
 
   // Gemini-powered functions
-  const handleGetWritingSuggestions = async () => {
-    if (content && content.length > 50) {
-      await getWritingSuggestions(content);
-    }
-  };
+
 
 
 
@@ -1537,66 +1527,7 @@ const Editor = () => {
                 )}
               </div>
 
-              {/* Writing Suggestions */}
-              <div className="mb-4">
-                <button
-                  onClick={() => toggleSection('writingSuggestions')}
-                  className="w-full flex items-center justify-between p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Lightbulb className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-gray-200">Writing Suggestions</span>
-                    {content && content.length > 50 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGetWritingSuggestions();
-                        }}
-                        className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                      >
-                        {isGenerating ? 'Generating...' : 'Refresh'}
-                      </button>
-                    )}
-                  </div>
-                  {collapsedSections.writingSuggestions ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
-                </button>
-                
-                {!collapsedSections.writingSuggestions && (
-                  <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                    {isGenerating ? (
-                      <div className="text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                        <p className="text-sm text-gray-400">Generating writing suggestions...</p>
-                      </div>
-                    ) : writingSuggestions && writingSuggestions.length > 0 ? (
-                      <div className="space-y-3">
-                        {writingSuggestions.map((suggestion, index) => (
-                          <div key={index} className="suggestion-item">
-                            <div className="flex items-start space-x-2">
-                              <div className="w-2 h-2 rounded-full mt-1.5 bg-blue-400"></div>
-                              <div className="flex-1">
-                                <p className="text-sm text-gray-300">{suggestion}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : content && content.length > 50 ? (
-                      <div className="text-center">
-                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">Click "Refresh" to get AI-powered writing suggestions</p>
-                        <p className="text-xs text-gray-500">Analyzing your content for improvement opportunities</p>
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">No writing suggestions yet</p>
-                        <p className="text-xs text-gray-500">Write more content (50+ characters) to get AI-powered writing suggestions</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+
 
 
 

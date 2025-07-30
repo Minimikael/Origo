@@ -242,6 +242,17 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Empty State for Filtering */}
+      {filteredDocuments.length === 0 && (searchTerm || activeTab !== 'all') && (
+        <div className="col-span-full flex flex-col items-center justify-center py-12">
+          <div className="empty-state">
+            <FileText className="empty-state-icon text-gray-400" />
+            <h3 className="empty-state-title">No documents found</h3>
+            <p className="empty-state-description">Try adjusting your search or filters</p>
+          </div>
+        </div>
+      )}
+
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredDocuments.length > 0 ? (

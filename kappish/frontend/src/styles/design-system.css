@@ -647,6 +647,26 @@
     0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* Light mode primary button overrides */
+[data-theme="light"] .btn-primary {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  color: var(--color-text-inverse);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 115, 230, 0.3);
+}
+
+[data-theme="light"] .btn-primary:hover {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 8px 24px rgba(0, 115, 230, 0.4),
+    0 0 30px rgba(0, 115, 230, 0.2);
+  transform: translateY(-2px);
+}
+
 /* Tertiary Button */
 .btn-tertiary {
   background-color: transparent;

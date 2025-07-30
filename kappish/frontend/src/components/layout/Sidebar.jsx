@@ -59,7 +59,7 @@ const Sidebar = () => {
 
 
       {/* New Document Button */}
-      <div className="px-4 py-2 pt-4">
+      <div className="px-4 py-2 pt-6">
         <button
           onClick={handleCreateDocument}
           className="w-full btn-primary"
