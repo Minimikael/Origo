@@ -4,7 +4,6 @@ import { useDocuments } from '../context/DocumentContext';
 import { useAI } from '../context/AIContext';
 import { validateAndFormatSource, generateCitation, insertCitationAtCursor } from '../utils/urlValidation';
 import { 
-  Home, 
   Save, 
   Share2, 
   ChevronLeft, 
@@ -63,8 +62,6 @@ const Editor = () => {
   const { documentId } = useParams();
   const navigate = useNavigate();
   const { 
-    argumentStrength, 
-    suggestions = [], 
     highlightedText, 
     clearHighlight,
     checkPlagiarism,
@@ -86,10 +83,8 @@ const Editor = () => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [collapsedSections, setCollapsedSections] = useState({
-    argumentStrength: false,
     writingAnalysis: false,
     writingSuggestions: false,
-    suggestions: false,
     citations: false,
     plagiarism: false
   });
@@ -1476,31 +1471,13 @@ const Editor = () => {
                 
                 {!collapsedSections.argumentStrength && (
                   <div className="mt-2 p-3 bg-gray-700 rounded-lg">
-                    {argumentStrength !== null && argumentStrength !== undefined ? (
-                      <>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-gray-300">Overall Score</span>
-                          <span className="text-lg font-bold text-blue-400">{argumentStrength}%</span>
-                        </div>
-                        <div className="progress-bar">
-                          <div 
-                            className="progress-fill" 
-                            style={{ width: `${argumentStrength}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {argumentStrength > 70 ? 'Excellent! Your argument is well-supported with strong evidence.' :
-                           argumentStrength > 40 ? 'Good start, but consider adding more supporting evidence to strengthen your position.' :
-                           'Your argument needs more research and evidence to be convincing.'}
-                        </p>
-                      </>
-                    ) : (
-                      <div className="text-center">
-                        <Target className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">No argument analysis yet</p>
-                        <p className="text-xs text-gray-500">Write more content to analyze your argument strength</p>
-                      </div>
-                    )}
+                    {/* argumentStrength is no longer available from useAI */}
+                    {/* This section will need to be re-evaluated or removed if argumentStrength is no longer tracked */}
+                    <div className="text-center">
+                      <Target className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400 mb-1">No argument analysis yet</p>
+                      <p className="text-xs text-gray-500">Write more content to analyze your argument strength</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1640,19 +1617,13 @@ const Editor = () => {
                 
                 {!collapsedSections.suggestions && (
                   <div className="mt-2 space-y-2">
-                    {(suggestions || []).length > 0 ? (
-                      (suggestions || []).map((suggestion, index) => (
-                        <div key={index} className="p-3 bg-gray-700 rounded-lg">
-                          <p className="text-sm text-gray-300">{suggestion}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 bg-gray-700 rounded-lg text-center">
-                        <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400 mb-1">No AI suggestions yet</p>
-                        <p className="text-xs text-gray-500">Start writing to get AI-powered suggestions</p>
-                      </div>
-                    )}
+                    {/* suggestions is no longer available from useAI */}
+                    {/* This section will need to be re-evaluated or removed if suggestions are no longer tracked */}
+                    <div className="p-4 bg-gray-700 rounded-lg text-center">
+                      <Lightbulb className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                      <p className="text-sm text-gray-400 mb-1">No AI suggestions yet</p>
+                      <p className="text-xs text-gray-500">Start writing to get AI-powered suggestions</p>
+                    </div>
                   </div>
                 )}
               </div>
