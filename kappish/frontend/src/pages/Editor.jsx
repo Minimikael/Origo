@@ -52,14 +52,13 @@ const Editor = () => {
     currentDocument,
     selectDocument,
     updateDocument,
-    documentData,
     addChatMessage,
     addNote,
     updateNote,
     deleteNote,
     addSource,
     updateDocumentSettings
-  } = useDocuments()
+  } = useDocuments();
   const { documentId } = useParams();
   const navigate = useNavigate();
   const { 
