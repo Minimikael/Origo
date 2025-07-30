@@ -14,7 +14,6 @@ import Button from '../ui/Button'
 
 const Sidebar = () => {
   const location = useLocation()
-  const { user } = useAuth()
   const { createDocument, documents } = useDocuments()
 
   const handleCreateDocument = async () => {

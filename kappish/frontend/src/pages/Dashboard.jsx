@@ -10,9 +10,7 @@ import {
   FileText, 
   Clock, 
   CheckCircle, 
-  Archive,
-  BookOpen,
-  FileImage
+  BookOpen
 } from 'lucide-react'
 import { useDocuments } from '../context/DocumentContext'
 
