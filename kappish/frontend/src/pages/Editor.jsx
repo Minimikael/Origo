@@ -49,13 +49,14 @@ import {
 
 const Editor = () => {
   const { 
-    documents,
     currentDocument,
     selectDocument,
     updateDocument,
     documentData,
     addChatMessage,
     addNote,
+    updateNote,
+    deleteNote,
     addSource,
     updateDocumentSettings
   } = useDocuments()
@@ -378,17 +379,17 @@ const Editor = () => {
           return;
         }
         break;
-              case 'image':
-          const imageUrl = prompt('Enter image URL:');
-          if (imageUrl) {
-            formattedText = `<img src="${imageUrl}" alt="${selectedText}" style="max-width: 100%; height: auto;" />`;
-          } else {
-            return;
-          }
-          break;
-        default:
-          // Handle unknown format
-          break;
+      case 'image':
+        const imageUrl = prompt('Enter image URL:');
+        if (imageUrl) {
+          formattedText = `<img src="${imageUrl}" alt="${selectedText}" style="max-width: 100%; height: auto;" />`;
+        } else {
+          return;
+        }
+        break;
+      default:
+        // Handle unknown format
+        break;
     }
 
     const tempDiv = document.createElement('div');
